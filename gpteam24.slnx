@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="gpteam24/gpteam24.vcxproj" Id="66c97ec5-34f5-4377-ba70-e669e5fece94" />
+</Solution>
