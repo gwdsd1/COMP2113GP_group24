@@ -81,15 +81,25 @@ void newGame() {
     cout << "\n\nYou wake up in the Main Building of HKU, your mind is blank...\n";
     std::this_thread::sleep_for(std::chrono::seconds(3));
     
-    startMaze();
+    MazeState state;
+    startMaze(state, false);
 }
 
 void loadGame() {
+    system("cls");
     cout << "\nLoading saved game...\n";
-    cout << "No save file found yet.\n";
-    cout << "\nPress Enter to return to main menu...";
-    cin.ignore();
-    cin.get();
+
+    MazeState state;
+    if (loadMazeStateFromFile("save.txt", state)) {
+        cout << "Save file loaded successfully!\n";
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        startMaze(state, true);
+    } else {
+        cout << "No save file found.\n";
+        cout << "\nPress Enter to return to main menu...";
+        cin.ignore();
+        cin.get();
+    }
 }
 
 void quitGame() {

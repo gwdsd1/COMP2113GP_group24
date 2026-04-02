@@ -7,10 +7,56 @@
 #include <conio.h>
 #include <windows.h>
 #include <time.h>
+#include <fstream>
 
 using namespace std;
 
+bool saveMazeStateToFile(const string& filename, const MazeState& state){
+    ofstream fout(filename);
+    if (!fout) {
+        return false;
+    }
+
+    fout << state.playerX << ' ' << state.playerY << '\n';
+
+    for (int i = 0; i < 3; i++) {
+        fout << state.noteX[i] << ' ' << state.noteY[i] << '\n';
+    }
+
+    for (int i = 0; i < 3; i++) {
+        fout << state.shooterX[i] << ' ' << state.shooterY[i] << '\n';
+    }
+
+    fout.close();
+    return true;
+}
+
+bool loadMazeStateFromFile(const string& filename, MazeState& state) {
+    ifstream fin(filename);
+    if (!fin) {
+        return false;
+    }
+
+    fin >> state.playerX >> state.playerY;
+
+    for (int i = 0; i < 3; i++) {
+        fin >> state.noteX[i] >> state.noteY[i];
+    }
+
+    for (int i = 0; i < 3; i++) {
+        fin >> state.shooterX[i] >> state.shooterY[i];
+    }
+
+    fin.close();
+    return true;
+}
+
 void startMaze() {
+    MazeState state;
+    startMaze(state, false);
+}
+
+void startMaze(MazeState& state, bool useSavedState) {
     const int MAZE_HEIGHT = 31;
     const int MAZE_WIDTH = 61;
     string maze[MAZE_HEIGHT] = {
@@ -53,30 +99,37 @@ void startMaze() {
             maze[15 + dy][30 + dx] = '.';
         }
     }
-    int playerX = 30; // 宽度索引
-    int playerY = 15; // 高度索引
+    int& playerX = state.playerX;
+    int& playerY = state.playerY;
+    int* noteX = state.noteX;
+    int* noteY = state.noteY;
+    int* shooterX = state.shooterX;
+    int* shooterY = state.shooterY;
 
-    // 随机生成音符符号位置 (金黄色音符) 3个
-    srand(static_cast<unsigned int>(time(0)));
-    int noteX[3], noteY[3];
-    for (int i = 0; i < 3; i++) {
-        do {
-            noteX[i] = rand() % MAZE_WIDTH;
-            noteY[i] = rand() % MAZE_HEIGHT;
-        } while (maze[noteY[i]][noteX[i]] == '#' || (noteX[i] >= 29 && noteX[i] <= 31 && noteY[i] >= 14 && noteY[i] <= 16));
-    }
+    if (!useSavedState) {
+        playerX = 30; // 宽度索引
+        playerY = 15; // 高度索引
 
-    // 随机生成弹幕射击关卡符号位置 (鲜红醒目符号) 3个
-    int shooterX[3], shooterY[3];
-    for (int i = 0; i < 3; i++) {
-        do {
-            shooterX[i] = rand() % MAZE_WIDTH;
-            shooterY[i] = rand() % MAZE_HEIGHT;
-        } while (maze[shooterY[i]][shooterX[i]] == '#' || 
-                 (shooterX[i] >= 29 && shooterX[i] <= 31 && shooterY[i] >= 14 && shooterY[i] <= 16) ||
-                 (shooterX[i] == noteX[0] && shooterY[i] == noteY[0]) ||
-                 (shooterX[i] == noteX[1] && shooterY[i] == noteY[1]) ||
-                 (shooterX[i] == noteX[2] && shooterY[i] == noteY[2]));
+        // 随机生成音符符号位置 (金黄色音符) 3个
+        srand(static_cast<unsigned int>(time(0)));
+        for (int i = 0; i < 3; i++) {
+            do {
+                noteX[i] = rand() % MAZE_WIDTH;
+                noteY[i] = rand() % MAZE_HEIGHT;
+            } while (maze[noteY[i]][noteX[i]] == '#' || (noteX[i] >= 29 && noteX[i] <= 31 && noteY[i] >= 14 && noteY[i] <= 16));
+        }
+
+        // 随机生成弹幕射击关卡符号位置 (鲜红醒目符号) 3个
+        for (int i = 0; i < 3; i++) {
+            do {
+                shooterX[i] = rand() % MAZE_WIDTH;
+                shooterY[i] = rand() % MAZE_HEIGHT;
+            } while (maze[shooterY[i]][shooterX[i]] == '#' || 
+                     (shooterX[i] >= 29 && shooterX[i] <= 31 && shooterY[i] >= 14 && shooterY[i] <= 16) ||
+                     (shooterX[i] == noteX[0] && shooterY[i] == noteY[0]) ||
+                     (shooterX[i] == noteX[1] && shooterY[i] == noteY[1]) ||
+                     (shooterX[i] == noteX[2] && shooterY[i] == noteY[2]));
+        }
     }
 
     system("cls");
@@ -262,6 +315,14 @@ void startMaze() {
             continue; // 跳过本次移动逻辑
         }
         else if (GetAsyncKeyState('Q') & 0x8000) {
+            COORD msgPos = { 0, (short)(MAZE_HEIGHT + 4) };
+            SetConsoleCursorPosition(hConsole, msgPos);
+            if (saveMazeStateToFile("save.txt", state)) {
+                cout << "Game saved to save.txt";
+            } else {
+                cout << "Failed to save game.";
+            }
+            Sleep(500);
             inMaze = false;
         }
 
