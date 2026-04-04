@@ -1,130 +1,96 @@
 #pragma once
 #include <string>
-#include <algorithm>
 
-#if defined(_WIN32)
-#include <windows.h>
-#include <mmsystem.h>
-#pragma comment(lib, "winmm.lib")
+// 包含 miniaudio 头文件（确保在某个 .cpp 中定义了 MINIAUDIO_IMPLEMENTATION）
+#include "miniaudio.h"
 
 class MusicPlayer {
 private:
-    std::string currentAlias;
-    bool isPlaying = false;
-    
-    std::string getFileExtension(const std::string& filepath) {
-        size_t pos = filepath.find_last_of('.');
-        if (pos == std::string::npos) return "";
-        std::string ext = filepath.substr(pos + 1);
-        std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
-        return ext;
-    }
-    
+    ma_engine engine;
+    ma_sound sound;
+    bool loaded;
+    bool isPlayingState;  // 记录播放状态
+
 public:
-    bool load(const std::string& filepath) {
-        // 停止当前播放
-        stop();
-        
-        // 使用时间戳作为唯一别名
-        currentAlias = "music_" + std::to_string(GetTickCount64());
-        
-        // 根据文件扩展名选择合适的 type 参数
-        std::string ext = getFileExtension(filepath);
-        std::string typeParam;
-        
-        if (ext == "wav") {
-            typeParam = " type waveaudio";
-        } else if (ext == "mp3") {
-            typeParam = " type mpegvideo";
-        } else if (ext == "mid" || ext == "midi") {
-            typeParam = " type sequencer";
-        } else {
-            // 无法识别的格式，尝试不指定 type 让系统自动检测
-            typeParam = "";
-        }
-        
-        // 打开音频文件
-        std::string cmd = "open \"" + filepath + "\"" + typeParam + " alias " + currentAlias;
-        MCIERROR err = mciSendStringA(cmd.c_str(), NULL, 0, NULL);
-        
-        if (err != 0) {
-            currentAlias.clear();
-            return false;
-        }
-        
-        return true;
-    }
-    
-    bool play() {
-        if (currentAlias.empty()) return false;
-        
-        std::string cmd = "play " + currentAlias + " from 0";
-        MCIERROR err = mciSendStringA(cmd.c_str(), NULL, 0, NULL);
-        isPlaying = (err == 0);
-        return isPlaying;
-    }
-    
-    void pause() {
-        if (currentAlias.empty()) return;
-        mciSendStringA(("pause " + currentAlias).c_str(), NULL, 0, NULL);
-        isPlaying = false;
-    }
-    
-    void stop() {
-        if (currentAlias.empty()) return;
-        mciSendStringA(("stop " + currentAlias).c_str(), NULL, 0, NULL);
-        mciSendStringA(("close " + currentAlias).c_str(), NULL, 0, NULL);
-        currentAlias.clear();
-        isPlaying = false;
-    }
-    
-    void setVolume(int volume) {
-        // volume: 0-1000
-        if (currentAlias.empty()) return;
-        std::string cmd = "setaudio " + currentAlias + " volume to " + std::to_string(volume);
-        mciSendStringA(cmd.c_str(), NULL, 0, NULL);
-    }
-    
-    bool getIsPlaying() const {
-        return isPlaying;
-    }
-    
-    long getPosition() {
-        if (currentAlias.empty()) return 0;
-
-        char buffer[128];
-        std::string cmd = "status " + currentAlias + " position";
-        mciSendStringA(cmd.c_str(), buffer, sizeof(buffer), NULL);
-
-        return atol(buffer);
-    }
-
-    bool isFinished() {
-        if (currentAlias.empty()) return true;
-
-        char buffer[128] = {};
-        std::string cmd = "status " + currentAlias + " mode";
-        mciSendStringA(cmd.c_str(), buffer, sizeof(buffer), NULL);
-
-        // MCI returns "stopped" when playback reaches the end
-        return (std::string(buffer) == "stopped");
+    MusicPlayer() : loaded(false), isPlayingState(false) {
+        ma_engine_init(NULL, &engine);
     }
 
     ~MusicPlayer() {
         stop();
+        if (loaded)
+            ma_sound_uninit(&sound);
+        ma_engine_uninit(&engine);
     }
-};
 
-#else
-class MusicPlayer {
-public:
-    bool load(const std::string& filepath) { return false; }
-    bool play() { return false; }
-    void pause() {}
-    void stop() {}
-    void setVolume(int volume) {}
-    bool getIsPlaying() const { return false; }
-    long getPosition() { return 0; }
-    bool isFinished() { return true; }
+    bool load(const std::string& filepath) {
+        stop(); // 停止之前播放
+        if (loaded)
+            ma_sound_uninit(&sound);
+
+        // 使用 MA_SOUND_FLAG_DECODE 以便获取准确的播放时间
+        if (ma_sound_init_from_file(&engine, filepath.c_str(),
+            MA_SOUND_FLAG_DECODE, NULL, NULL, &sound) != MA_SUCCESS) {
+            loaded = false;
+            return false;
+        }
+
+        // 设置循环播放（背景音乐）
+        ma_sound_set_looping(&sound, MA_TRUE);
+
+        loaded = true;
+        isPlayingState = false;
+        return true;
+    }
+
+    bool play() {
+        if (!loaded) return false;
+
+        if (ma_sound_start(&sound) != MA_SUCCESS) {
+            isPlayingState = false;
+            return false;
+        }
+
+        isPlayingState = true;
+        return true;
+    }
+
+    void pause() {
+        if (loaded && isPlayingState) {
+            ma_sound_stop(&sound);
+            isPlayingState = false;
+        }
+    }
+
+    void stop() {
+        if (loaded) {
+            ma_sound_stop(&sound);
+            ma_sound_seek_to_pcm_frame(&sound, 0);
+            isPlayingState = false;
+        }
+    }
+
+    void setVolume(int volume) {
+        // volume: 0-1000 映射到 0.0 - 1.0 (保持与原 MCI 版本一致)
+        if (loaded) ma_sound_set_volume(&sound, volume / 1000.0f);
+    }
+
+    bool getIsPlaying() const {
+        return loaded && isPlayingState;
+    }
+
+    long getPosition() {
+        if (!loaded) return 0;
+        return (long)ma_sound_get_time_in_milliseconds(&sound);
+    }
+
+    bool isFinished() {
+        // 因为设置了循环播放，所以背景音乐永远不会自动结束
+        // 只有当用户切换页面（调用stop）时才会停止
+        return !isPlayingState;
+    }
+
+    // 禁止拷贝（避免多个对象共享同一个音频引擎）
+    MusicPlayer(const MusicPlayer&) = delete;
+    MusicPlayer& operator=(const MusicPlayer&) = delete;
 };
-#endif

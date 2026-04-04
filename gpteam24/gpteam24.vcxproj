@@ -130,6 +130,8 @@
     <ClCompile Include="game.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="maze.cpp" />
+    <ClCompile Include="miniaudio_imple.cpp" />
+    <ClCompile Include="MusicManager.cpp" />
     <ClCompile Include="music_game.cpp" />
     <ClCompile Include="music_core.cpp" />
     <ClCompile Include="shooter_game.cpp" />
@@ -138,6 +140,7 @@
     <ClInclude Include="game.h" />
     <ClInclude Include="maze.h" />
     <ClInclude Include="music_game.h" />
+    <ClInclude Include="MusicManager.h" />
     <ClInclude Include="MusicPlayer.h" />
     <ClInclude Include="ChartLoader.h" />
     <ClInclude Include="shooter_game.h" />
