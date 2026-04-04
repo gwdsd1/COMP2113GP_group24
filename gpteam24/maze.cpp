@@ -1,6 +1,7 @@
 #include "maze.h"
 #include "music_game.h"
 #include "shooter_game.h"
+#include "MusicManager.h"
 #include <iostream>
 #include <string>
 #include <cstdlib>
@@ -57,6 +58,9 @@ void startMaze() {
 }
 
 void startMaze(MazeState& state, bool useSavedState) {
+    // 播放迷宫背景音乐
+    MusicManager::playBackgroundMusic("music/maze_bg.mp3");
+
     const int MAZE_HEIGHT = 31;
     const int MAZE_WIDTH = 61;
     string maze[MAZE_HEIGHT] = {

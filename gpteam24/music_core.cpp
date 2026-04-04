@@ -23,7 +23,7 @@
 #endif
 
 #include "ChartLoader.h"
-#include "MusicPlayer.h"
+#include "MusicManager.h"
 
 using namespace std;
 
@@ -649,7 +649,7 @@ void startMusicGameInternal() {
     term::moveHome();
     
     Game game;
-    MusicPlayer musicPlayer;
+    // 使用全局 MusicManager，不需要局部 musicPlayer
     
     // -------- 关卡模式 --------
     const Stage* selected = nullptr;
@@ -713,8 +713,8 @@ void startMusicGameInternal() {
                 std::cout << "? Chart loaded  (" << game.chart.notes.size() << " notes, BPM " << game.chart.bpm << ")\n";
                 term::resetColor();
 
-                // 自动加载音乐
-                if (musicPlayer.load(selected->musicPath)) {
+                // 自动加载音乐（使用 MusicManager）
+                if (MusicManager::playBackgroundMusic(selected->musicPath)) {
                     term::setGreen();
                     std::cout << "? Music loaded: " << selected->musicPath << "\n";
                     term::resetColor();
@@ -740,11 +740,8 @@ void startMusicGameInternal() {
 
     // 显示倒计时
     showCountdown();
-    
-    // 开始播放音乐
-    if (game.useChart) {
-        musicPlayer.play();
-    }
+
+    // 音乐已经在加载时开始播放，无需再次 play()
 
     Input input;
 
@@ -776,7 +773,7 @@ void startMusicGameInternal() {
         // 曲谱模式：音乐播放结束后再等待 FINISH_DELAY 退出
         if (game.useChart) {
             // 有音乐时以音乐结束为准，无音乐时以曲谱结束为准
-            bool musicDone = musicPlayer.isFinished();
+            bool musicDone = MusicManager::isFinished();
             if (!game.chartFinished && game.allNotesCleared() && musicDone) {
                 game.chartFinished = true;
                 game.finishTimer = 0.0;
@@ -794,9 +791,9 @@ void startMusicGameInternal() {
 
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
-    
-    // 停止音乐
-    musicPlayer.stop();
+
+    // 停止当前音乐，返回时会自动播放背景音乐
+    MusicManager::stop();
 
     // 显示游戏结束画面
     showGameOver(game);

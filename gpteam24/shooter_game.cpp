@@ -1,4 +1,5 @@
 #include "shooter_game.h"
+#include "MusicManager.h"
 #include <iostream>
 #include <string>
 #include <vector>
@@ -22,6 +23,9 @@ struct ShooterEnemy {
 };
 
 void startShooterGame() {
+    // 播放射击游戏背景音乐
+    MusicManager::playBackgroundMusic("music/shooter_bg.mp3");
+
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     
     // Enable VT for ANSI

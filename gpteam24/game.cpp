@@ -1,5 +1,6 @@
 #include "game.h"
 #include "maze.h"
+#include "MusicManager.h"
 #include <iostream>
 #include <string>
 #include <cstdlib>
@@ -9,6 +10,9 @@
 using namespace std;
 
 void showMainMenu() {
+    // 播放主菜单背景音乐
+    MusicManager::playBackgroundMusic("music/menu_bg.mp3");
+
     bool isRunning = true;
     while (isRunning) {
         system("cls"); // 清除屏幕(Windows平台适用)
