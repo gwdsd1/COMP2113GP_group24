@@ -302,7 +302,7 @@ struct Game {
                 laneHitTimer[li] = 0.15; // 设置轨道高亮时长
                 
                 int bestIdx = -1;
-                int bestDist = 1e9;
+                int bestDist = 1000000000; // 将 1e9 改为整数字面量，避免 double 到 int 的转换警告
                 for (int i = 0; i < (int)notes.size(); ++i) {
                     auto& n = notes[i];
                     if (n.dead || n.lane != li) continue;
@@ -714,7 +714,8 @@ void startMusicGameInternal() {
                 term::resetColor();
 
                 // 自动加载音乐（使用 MusicManager）
-                if (MusicManager::playBackgroundMusic(selected->musicPath)) {
+                MusicManager::stop();
+                if (MusicManager::getPlayer().load(selected->musicPath)) {
                     term::setGreen();
                     std::cout << "? Music loaded: " << selected->musicPath << "\n";
                     term::resetColor();
@@ -741,7 +742,8 @@ void startMusicGameInternal() {
     // 显示倒计时
     showCountdown();
 
-    // 音乐已经在加载时开始播放，无需再次 play()
+    // 倒计时结束后开始播放音乐
+    MusicManager::getPlayer().play();
 
     Input input;
 
