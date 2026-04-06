@@ -9,8 +9,60 @@
 #include <windows.h>
 #include <time.h>
 #include <fstream>
+#include <ctime>
+#include <sstream>
+#include <vector>
+#include <filesystem>
+#include <vector>
 
 using namespace std;
+
+string generateSaveFileName() {
+    time_t now = time(0);
+    tm localTime;
+    localtime_s(&localTime, &now);
+
+    stringstream ss;
+    ss << "save_"
+       << (localTime.tm_year + 1900) << "_";
+
+    if (localTime.tm_mon + 1 < 10) ss << "0";
+    ss << (localTime.tm_mon + 1) << "_";
+
+    if (localTime.tm_mday < 10) ss << "0";
+    ss << localTime.tm_mday << "_";
+
+    if (localTime.tm_hour < 10) ss << "0";
+    ss << localTime.tm_hour << "_";
+
+    if (localTime.tm_min < 10) ss << "0";
+    ss << localTime.tm_min << "_";
+
+    if (localTime.tm_sec < 10) ss << "0";
+    ss << localTime.tm_sec << ".txt";
+
+    return ss.str();
+}
+
+vector<string> getSaveFiles() {
+    vector<string> saveFiles;
+
+    for (const auto& entry : filesystem::directory_iterator(".")) {
+        if (entry.is_regular_file()) {
+            string filename = entry.path().filename().string();
+
+            if (filename.rfind("save_", 0) == 0 &&
+                filename.size() >= 9 &&
+                filename.substr(filename.size() - 4) == ".txt") {
+                saveFiles.push_back(filename);
+            }
+        }
+    }
+    sort(saveFiles.begin(), saveFiles.end());
+    return saveFiles;
+}
+
+
 
 bool saveMazeStateToFile(const string& filename, const MazeState& state){
     ofstream fout(filename);
@@ -321,11 +373,12 @@ void startMaze(MazeState& state, bool useSavedState) {
         else if (GetAsyncKeyState('Q') & 0x8000) {
             COORD msgPos = { 0, (short)(MAZE_HEIGHT + 4) };
             SetConsoleCursorPosition(hConsole, msgPos);
-            if (saveMazeStateToFile("save.txt", state)) {
-                cout << "Game saved to save.txt";
+            string filename = generateSaveFileName();
+            if (saveMazeStateToFile(filename, state)) {
+                cout << "Game saved to " << filename;
             } else {
-                cout << "Failed to save game.";
-            }
+                 cout << "Failed to save game.";
+        }
             Sleep(500);
             inMaze = false;
         }

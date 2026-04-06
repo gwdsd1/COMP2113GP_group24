@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <thread>
 #include <chrono>
+#include <vector>
 
 using namespace std;
 
@@ -93,13 +94,42 @@ void loadGame() {
     system("cls");
     cout << "\nLoading saved game...\n";
 
+    vector<string> saveFiles = getSaveFiles();
+
+    if (saveFiles.empty()) {
+        cout << "No save files found.\n";
+        cout << "\nPress Enter to return to main menu...";
+        cin.ignore();
+        cin.get();
+        return;
+    }
+
+    cout << "\nAvailable save files:\n";
+    for (int i = 0; i < saveFiles.size(); i++) {
+        cout << i + 1 << ". " << saveFiles[i] << '\n';
+    }
+
+    cout << "\nChoose a save file number: ";
+    int choice;
+    cin >> choice;
+
+    if (choice < 1 || choice > saveFiles.size()) {
+        cout << "Invalid choice.\n";
+        cout << "\nPress Enter to return to main menu...";
+        cin.ignore();
+        cin.get();
+        return;
+    }
+
     MazeState state;
-    if (loadMazeStateFromFile("save.txt", state)) {
-        cout << "Save file loaded successfully!\n";
+    string selectedFile = saveFiles[choice - 1];
+
+    if (loadMazeStateFromFile(selectedFile, state)) {
+        cout << "\nSave file loaded successfully!\n";
         std::this_thread::sleep_for(std::chrono::seconds(1));
         startMaze(state, true);
     } else {
-        cout << "No save file found.\n";
+        cout << "\nFailed to load save file.\n";
         cout << "\nPress Enter to return to main menu...";
         cin.ignore();
         cin.get();

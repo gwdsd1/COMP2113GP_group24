@@ -1,6 +1,7 @@
 #ifndef MAZE_H
 #define MAZE_H
 #include <string>
+#include <vector>
 
 struct MazeState{
     int playerX;
@@ -14,5 +15,6 @@ void startMaze();
 void startMaze(MazeState& state, bool useSavedState);
 bool saveMazeStateToFile(const std::string& filename, const MazeState& state);
 bool loadMazeStateFromFile(const std::string& filename, MazeState& state);
+std::string generateSaveFileName();
 
 #endif // MAZE_H
