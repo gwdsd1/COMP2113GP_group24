@@ -16,5 +16,6 @@ void startMaze(MazeState& state, bool useSavedState);
 bool saveMazeStateToFile(const std::string& filename, const MazeState& state);
 bool loadMazeStateFromFile(const std::string& filename, MazeState& state);
 std::string generateSaveFileName();
+std::vector<std::string> getSaveFiles();
 
 #endif // MAZE_H
