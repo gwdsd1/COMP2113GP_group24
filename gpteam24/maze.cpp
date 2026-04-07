@@ -429,6 +429,11 @@ void startMaze(MazeState& state, bool useSavedState) {
             }
         }
 
+        // 吞掉按下的多余字符，防止它们回显在屏幕底部导致换行和画面滚动
+        while (_kbhit()) {
+            _getch();
+        }
+
         Sleep(MOVE_DELAY_MS); // Control movement speed and yield CPU
     }
 

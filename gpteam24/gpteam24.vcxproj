@@ -139,11 +139,34 @@
   <ItemGroup>
     <ClInclude Include="game.h" />
     <ClInclude Include="maze.h" />
+    <ClInclude Include="miniaudio.h" />
     <ClInclude Include="music_game.h" />
     <ClInclude Include="MusicManager.h" />
     <ClInclude Include="MusicPlayer.h" />
     <ClInclude Include="ChartLoader.h" />
     <ClInclude Include="shooter_game.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include=".DS_Store" />
+    <None Include="charts\example.chart" />
+    <None Include="charts\n-buna_because_summer_will_end.chart" />
+    <None Include="charts\r-906_manimani.chart" />
+    <None Include="charts\yorushika_paddle.chart" />
+    <None Include="charts\zutomayo_justice.chart" />
+  </ItemGroup>
+  <ItemGroup>
+    <Media Include="music\fight_bg.mp3" />
+    <Media Include="music\maze_bg.mp3" />
+    <Media Include="music\menu_bg.mp3" />
+    <Media Include="music\n-buna_because_summer_will_end.mp3" />
+    <Media Include="music\r-906_manimani.mp3" />
+    <Media Include="music\shooter_bg.mp3" />
+    <Media Include="music\yorushika_paddle.mp3" />
+    <Media Include="music\zutomayo_justice.mp3" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="save.txt" />
+    <Text Include="save_2026_04_06_23_20_28.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

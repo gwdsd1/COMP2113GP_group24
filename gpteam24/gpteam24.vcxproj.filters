@@ -33,6 +33,12 @@
     <ClCompile Include="shooter_game.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="miniaudio_imple.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="MusicManager.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="game.h">
@@ -53,5 +59,33 @@
     <ClInclude Include="shooter_game.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="MusicManager.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="miniaudio.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="charts\example.chart" />
+    <None Include="charts\n-buna_because_summer_will_end.chart" />
+    <None Include="charts\r-906_manimani.chart" />
+    <None Include="charts\yorushika_paddle.chart" />
+    <None Include="charts\zutomayo_justice.chart" />
+    <None Include=".DS_Store" />
+  </ItemGroup>
+  <ItemGroup>
+    <Media Include="music\fight_bg.mp3" />
+    <Media Include="music\maze_bg.mp3" />
+    <Media Include="music\menu_bg.mp3" />
+    <Media Include="music\n-buna_because_summer_will_end.mp3" />
+    <Media Include="music\r-906_manimani.mp3" />
+    <Media Include="music\shooter_bg.mp3" />
+    <Media Include="music\yorushika_paddle.mp3" />
+    <Media Include="music\zutomayo_justice.mp3" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="save.txt" />
+    <Text Include="save_2026_04_06_23_20_28.txt" />
   </ItemGroup>
 </Project>
