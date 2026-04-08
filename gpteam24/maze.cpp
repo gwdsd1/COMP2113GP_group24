@@ -454,9 +454,10 @@ void startMaze(MazeState& state, bool useSavedState) {
         char inKey = console::getInput();
         if (inKey == 'W' || inKey == 'A' || inKey == 'S' || inKey == 'D') {
             linuxLastDir = inKey;
-            linuxDirKeepAlive = 4; // keep alive for ~240ms 
-        } else if (inKey == 'E' || inKey == 'Q') {
+            linuxDirKeepAlive = 9; // keep alive for ~540ms to bridge standard 500ms keyboard repeat delays
+        } else if (inKey == 'E' || inKey == 'Q' || inKey == ' ') { // Any interaction or spacebar acts as explicit brake
             linuxLastDir = 0;
+            linuxDirKeepAlive = 0;
         }
 
         if (linuxDirKeepAlive > 0 && linuxLastDir != 0) {
