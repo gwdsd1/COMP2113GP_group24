@@ -182,8 +182,8 @@ struct Game {
     int judgeY = 24;
 
     // 判定窗口（单位：行）
-    int perfectWindow = 0; // ±0 行
-    int goodWindow = 1; // ±1 行
+    int perfectWindow = 1; // ±1 行
+    int goodWindow = 3; // ±3 行
 
     // 下落速度与产生频率
     double speedRowsPerSec = 15.0;
