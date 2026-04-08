@@ -66,8 +66,8 @@ namespace console {
         }
         #else
         char buf[64];
-        ssize_t n = read(STDIN_FILENO, buf, sizeof(buf));
-        if (n > 0) {
+        ssize_t n;
+        while ((n = read(STDIN_FILENO, buf, sizeof(buf))) > 0) {
             for (ssize_t i=0; i<n; i++) {
                 if (isalpha(buf[i])) lastChar = (char)std::toupper(buf[i]);
             }
@@ -88,6 +88,7 @@ namespace console {
     struct LinuxTermGuard {
         termios orig;
         bool active = false;
+        int origFlags = 0;
         LinuxTermGuard() {
             if (!isatty(STDIN_FILENO)) return;
             tcgetattr(STDIN_FILENO, &orig);
@@ -96,13 +97,14 @@ namespace console {
             raw.c_cc[VMIN] = 0;
             raw.c_cc[VTIME] = 0;
             tcsetattr(STDIN_FILENO, TCSANOW, &raw);
-            int flags = fcntl(STDIN_FILENO, F_GETFL, 0);
-            fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK);
+            origFlags = fcntl(STDIN_FILENO, F_GETFL, 0);
+            fcntl(STDIN_FILENO, F_SETFL, origFlags | O_NONBLOCK);
             active = true;
         }
         ~LinuxTermGuard() {
             if (active) {
                 tcsetattr(STDIN_FILENO, TCSANOW, &orig);
+                fcntl(STDIN_FILENO, F_SETFL, origFlags);
             }
         }
     };
@@ -436,28 +438,13 @@ void startMaze(MazeState& state, bool useSavedState) {
         // 吃掉输入缓冲防止换行bug
         console::clearInputBuffer();
 #else
-        // Linux 平台的长按去抖动缓存（模拟长按延迟期间的惯性响应，约 ~180ms）
-        static char linuxLastDir = 0;
-        static int linuxDirKeepAlive = 0;
-
         char inKey = console::getInput();
-        if (inKey == 'W' || inKey == 'A' || inKey == 'S' || inKey == 'D') {
-            linuxLastDir = inKey;
-            linuxDirKeepAlive = 3; // 维持惯性 3 帧
-        } else if (inKey == 'E' || inKey == 'Q' || inKey != 0) {
-            linuxLastDir = 0;      // 按下非方向键及时取消惯性
-        }
-
-        if (linuxDirKeepAlive > 0 && linuxLastDir != 0) {
-            if (linuxLastDir == 'W') { nextY--; tryMove = true; }
-            else if (linuxLastDir == 'S') { nextY++; tryMove = true; }
-            else if (linuxLastDir == 'A') { nextX--; tryMove = true; }
-            else if (linuxLastDir == 'D') { nextX++; tryMove = true; }
-            linuxDirKeepAlive--;
-        }
-
-        if (nearNote && inKey == 'E') { doInteract = true; linuxLastDir = 0; }
-        if (inKey == 'Q') { doQuit = true; linuxLastDir = 0; }
+        if (inKey == 'W') { nextY--; tryMove = true; }
+        else if (inKey == 'S') { nextY++; tryMove = true; }
+        else if (inKey == 'A') { nextX--; tryMove = true; }
+        else if (inKey == 'D') { nextX++; tryMove = true; }
+        else if (nearNote && inKey == 'E') { doInteract = true; }
+        else if (inKey == 'Q') { doQuit = true; }
 #endif
 
         if (doInteract) {
@@ -569,6 +556,8 @@ void startMaze(MazeState& state, bool useSavedState) {
                 }
             }
         }
+
+        std::cout.flush(); // FLUSH is required on Linux, otherwise no screen updates!
 
         console::sleep(MOVE_DELAY_MS); // Control movement speed and yield CPU
     }

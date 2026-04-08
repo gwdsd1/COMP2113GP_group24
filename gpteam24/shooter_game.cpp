@@ -38,8 +38,8 @@ namespace shooter_console {
         }
         #else
         char buf[64];
-        ssize_t n = read(STDIN_FILENO, buf, sizeof(buf));
-        if (n > 0) {
+        ssize_t n;
+        while ((n = read(STDIN_FILENO, buf, sizeof(buf))) > 0) {
             for (ssize_t i=0; i<n; i++) {
                 if (isalpha(buf[i])) lastChar = (char)std::toupper(buf[i]);
             }
@@ -56,6 +56,7 @@ namespace shooter_console {
     struct LinuxTermGuard {
         termios orig;
         bool active = false;
+        int origFlags = 0;
         LinuxTermGuard() {
             if (!isatty(STDIN_FILENO)) return;
             tcgetattr(STDIN_FILENO, &orig);
@@ -64,13 +65,14 @@ namespace shooter_console {
             raw.c_cc[VMIN] = 0;
             raw.c_cc[VTIME] = 0;
             tcsetattr(STDIN_FILENO, TCSANOW, &raw);
-            int flags = fcntl(STDIN_FILENO, F_GETFL, 0);
-            fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK);
+            origFlags = fcntl(STDIN_FILENO, F_GETFL, 0);
+            fcntl(STDIN_FILENO, F_SETFL, origFlags | O_NONBLOCK);
             active = true;
         }
         ~LinuxTermGuard() {
             if (active) {
                 tcsetattr(STDIN_FILENO, TCSANOW, &orig);
+                fcntl(STDIN_FILENO, F_SETFL, origFlags);
             }
         }
     };
@@ -292,7 +294,7 @@ void startShooterGame() {
         if (lastColor != 0) frameOut += "\x1b[0m";
         frameOut += "\nTime left: " + to_string((int)(20.0 - elapsedSeconds)) + "s  | Score: " + to_string(score) + "      \n";
 
-        cout << frameOut;
+        cout << frameOut << flush;
 
         // Framing
         this_thread::sleep_for(chrono::milliseconds(16));
@@ -305,7 +307,7 @@ void startShooterGame() {
 
     // End transition
     shooter_console::clear();
-    cout << "\x1b[96m\n\nYOU FINALLY HANDLED ALL OF THESE......\x1b[0m\n";
+    cout << "\x1b[96m\n\nYOU FINALLY HANDLED ALL OF THESE......\x1b[0m\n" << flush;
     this_thread::sleep_for(chrono::milliseconds(2000));
     
     // Clear buffer again

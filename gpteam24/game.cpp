@@ -91,7 +91,7 @@ void newGame() {
 #else
     std::cout << "\x1b[2J\x1b[H";
 #endif
-    cout << "\n\nYou wake up in the Main Building of HKU, your mind is blank...\n";
+    cout << "\n\nYou wake up in the Main Building of HKU, your mind is blank...\n" << std::flush;
     std::this_thread::sleep_for(std::chrono::seconds(3));
     
     MazeState state;

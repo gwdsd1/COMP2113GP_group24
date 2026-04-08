@@ -76,6 +76,7 @@ namespace term {
     struct TermiosGuard {
         termios orig{};
         bool ok = false;
+        int origFlags = 0;
 
         TermiosGuard() { enterRaw(); }
         ~TermiosGuard() { restore(); }
@@ -91,13 +92,14 @@ namespace term {
             if (tcsetattr(STDIN_FILENO, TCSANOW, &raw) == -1) return;
 
             // 设 stdin 非阻塞
-            int flags = fcntl(STDIN_FILENO, F_GETFL, 0);
-            fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK);
+            origFlags = fcntl(STDIN_FILENO, F_GETFL, 0);
+            fcntl(STDIN_FILENO, F_SETFL, origFlags | O_NONBLOCK);
             ok = true;
         }
         void restore() {
             if (!ok) return;
             tcsetattr(STDIN_FILENO, TCSANOW, &orig);
+            fcntl(STDIN_FILENO, F_SETFL, origFlags);
             ok = false;
         }
     };
@@ -685,9 +687,14 @@ void startMusicGameInternal() {
 #if defined(_WIN32)
         while (_kbhit()) _getch();
 #else
-        // 在 Linux 下如果使用 termios，之前已在主循环 pollInput 处理过。
-        // 若在此处不需要严格清空输入或可以用其他非阻塞方式，可暂时跳过。
-        // 为确保兼容性，可以定义一个空操作或类似实现，此处因为使用了 stdin 输入，先简单屏蔽。
+        // 在 Linux 下丢弃所有残留的标准输入缓冲，以防之前的操作遗留输入
+        {
+            int oldf = fcntl(STDIN_FILENO, F_GETFL, 0);
+            fcntl(STDIN_FILENO, F_SETFL, oldf | O_NONBLOCK);
+            char ch;
+            while(read(STDIN_FILENO, &ch, 1) > 0);
+            fcntl(STDIN_FILENO, F_SETFL, oldf);
+        }
 #endif
         std::cin.clear();
 
