@@ -246,6 +246,8 @@ void startMaze(MazeState& state, bool useSavedState) {
         if (nearShooter) {
             startShooterGame();
 
+             MusicManager::playBackgroundMusic("music/maze_bg.mp3");
+
             // Refresh shooter locations
             for (int i=0; i<3; i++) {
                 do {
@@ -302,13 +304,17 @@ void startMaze(MazeState& state, bool useSavedState) {
             }
         }
 
-        // 显示或隐藏提示信息
-        COORD hintPos = { 0, (short)(MAZE_HEIGHT + 2) };
-        SetConsoleCursorPosition(hConsole, hintPos);
-        if (nearNote) {
-            cout << "Press E to interact...                                  ";
-        } else {
-            cout << "                                                        ";
+        // 显示或隐藏提示信息（仅在状态变化时输出，避免每帧触发滚动）
+        static bool lastNearNote = false;
+        if (nearNote != lastNearNote) {
+            COORD hintPos = { 0, (short)(MAZE_HEIGHT + 2) };
+            SetConsoleCursorPosition(hConsole, hintPos);
+            if (nearNote) {
+                cout << "Press E to interact...                                  ";
+            } else {
+                cout << "                                                        ";
+            }
+            lastNearNote = nearNote;
         }
 
         int nextX = playerX;
@@ -325,6 +331,8 @@ void startMaze(MazeState& state, bool useSavedState) {
             Sleep(200); 
 
             startMusicGame();
+
+            MusicManager::playBackgroundMusic("music/maze_bg.mp3");
 
             // Generate a new position for the music game entrance
             for (int i=0; i<3; i++) {
