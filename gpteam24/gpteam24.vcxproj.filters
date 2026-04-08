@@ -73,6 +73,7 @@
     <None Include="charts\yorushika_paddle.chart" />
     <None Include="charts\zutomayo_justice.chart" />
     <None Include=".DS_Store" />
+    <None Include="Makefile" />
   </ItemGroup>
   <ItemGroup>
     <Media Include="music\fight_bg.mp3" />

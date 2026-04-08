@@ -154,6 +154,7 @@
     <None Include="charts\r-906_manimani.chart" />
     <None Include="charts\yorushika_paddle.chart" />
     <None Include="charts\zutomayo_justice.chart" />
+    <None Include="Makefile" />
   </ItemGroup>
   <ItemGroup>
     <Media Include="music\fight_bg.mp3" />
