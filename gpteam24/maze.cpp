@@ -447,24 +447,33 @@ void startMaze(MazeState& state, bool useSavedState) {
         // 吃掉输入缓冲防止换行bug
         console::clearInputBuffer();
 #else
-        // Apply temporary momentum on Linux to bridge across keyboard auto-repeat delay gaps
         static char linuxLastDir = 0;
         static int linuxDirKeepAlive = 0;
 
         char inKey = console::getInput();
         if (inKey == 'W' || inKey == 'A' || inKey == 'S' || inKey == 'D') {
-            linuxLastDir = inKey;
-            linuxDirKeepAlive = 9; // keep alive for ~540ms to bridge standard 500ms keyboard repeat delays
-        } else if (inKey == 'E' || inKey == 'Q' || inKey == ' ') { // Any interaction or spacebar acts as explicit brake
+            if (linuxLastDir != inKey) {
+                linuxLastDir = inKey; // 立即响应最新转向，消除转向延迟
+            }
+            linuxDirKeepAlive = 2; // 只保留 ~120ms 的极小缓冲保证连击平滑，彻底砍掉惯性滑行
+
+            tryMove = true;
+            if (inKey == 'W') nextY--;
+            else if (inKey == 'S') nextY++;
+            else if (inKey == 'A') nextX--;
+            else if (inKey == 'D') nextX++;
+        } else if (inKey != 0) {
             linuxLastDir = 0;
             linuxDirKeepAlive = 0;
         }
 
-        if (linuxDirKeepAlive > 0 && linuxLastDir != 0) {
-            if (linuxLastDir == 'W') { nextY--; tryMove = true; }
-            else if (linuxLastDir == 'S') { nextY++; tryMove = true; }
-            else if (linuxLastDir == 'A') { nextX--; tryMove = true; }
-            else if (linuxLastDir == 'D') { nextX++; tryMove = true; }
+        // 无按键但有微量缓冲时，补足位移以防抖
+        if (inKey == 0 && linuxDirKeepAlive > 0 && linuxLastDir != 0) {
+            tryMove = true;
+            if (linuxLastDir == 'W') nextY--;
+            else if (linuxLastDir == 'S') nextY++;
+            else if (linuxLastDir == 'A') nextX--;
+            else if (linuxLastDir == 'D') nextX++;
             linuxDirKeepAlive--;
         }
 
