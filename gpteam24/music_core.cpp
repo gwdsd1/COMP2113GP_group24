@@ -682,7 +682,13 @@ void startMusicGameInternal() {
         term::resetColor();
 
         // Flush stdin buffer to throw away any stray keys left over from previous state
+#if defined(_WIN32)
         while (_kbhit()) _getch();
+#else
+        // 在 Linux 下如果使用 termios，之前已在主循环 pollInput 处理过。
+        // 若在此处不需要严格清空输入或可以用其他非阻塞方式，可暂时跳过。
+        // 为确保兼容性，可以定义一个空操作或类似实现，此处因为使用了 stdin 输入，先简单屏蔽。
+#endif
         std::cin.clear();
 
         std::string stageInput;

@@ -16,7 +16,11 @@ void showMainMenu() {
 
     bool isRunning = true;
     while (isRunning) {
-        system("cls"); // 清除屏幕(Windows平台适用)
+        #if defined(_WIN32)
+        system("cls");
+        #else
+        std::cout << "\x1b[2J\x1b[H";
+        #endif
 
         // 打印巨大字体的 ASCII Art
         cout << R"(
@@ -82,7 +86,11 @@ void showMainMenu() {
 }
 
 void newGame() {
+#if defined(_WIN32)
     system("cls");
+#else
+    std::cout << "\x1b[2J\x1b[H";
+#endif
     cout << "\n\nYou wake up in the Main Building of HKU, your mind is blank...\n";
     std::this_thread::sleep_for(std::chrono::seconds(3));
     
@@ -91,7 +99,11 @@ void newGame() {
 }
 
 void loadGame() {
+#if defined(_WIN32)
     system("cls");
+#else
+    std::cout << "\x1b[2J\x1b[H";
+#endif
     cout << "\nLoading saved game...\n";
 
     vector<string> saveFiles = getSaveFiles();
