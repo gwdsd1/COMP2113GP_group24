@@ -69,7 +69,16 @@ namespace console {
         ssize_t n;
         while ((n = read(STDIN_FILENO, buf, sizeof(buf))) > 0) {
             for (ssize_t i=0; i<n; i++) {
-                if (isalpha(buf[i])) lastChar = (char)std::toupper(buf[i]);
+                if (buf[i] == '\x1b' && i + 2 < n && buf[i+1] == '[') {
+                    if (buf[i+2] == 'A') lastChar = 'W';
+                    else if (buf[i+2] == 'B') lastChar = 'S';
+                    else if (buf[i+2] == 'C') lastChar = 'D';
+                    else if (buf[i+2] == 'D') lastChar = 'A';
+                    i += 2;
+                }
+                else if (isalpha(buf[i])) { 
+                    lastChar = (char)std::toupper(buf[i]); 
+                }
             }
         }
         #endif

@@ -41,7 +41,16 @@ namespace shooter_console {
         ssize_t n;
         while ((n = read(STDIN_FILENO, buf, sizeof(buf))) > 0) {
             for (ssize_t i=0; i<n; i++) {
-                if (isalpha(buf[i])) lastChar = (char)std::toupper(buf[i]);
+                if (buf[i] == '\x1b' && i + 2 < n && buf[i+1] == '[') {
+                    if (buf[i+2] == 'A') lastChar = 'W';
+                    else if (buf[i+2] == 'B') lastChar = 'S';
+                    else if (buf[i+2] == 'C') lastChar = 'D';
+                    else if (buf[i+2] == 'D') lastChar = 'A';
+                    i += 2; // skip the parsed sequence
+                }
+                else if (isalpha(buf[i])) { 
+                    lastChar = (char)std::toupper(buf[i]); 
+                }
             }
         }
         #endif
@@ -168,24 +177,25 @@ void startShooterGame() {
 
         // Input
 #if defined(_WIN32)
-        if (GetAsyncKeyState('A') & 0x8000) { playerX -= 40.0 * lastDt; }
-        if (GetAsyncKeyState('D') & 0x8000) { playerX += 40.0 * lastDt; }
-        if (GetAsyncKeyState('W') & 0x8000) { playerY -= 30.0 * lastDt; }
-        if (GetAsyncKeyState('S') & 0x8000) { playerY += 30.0 * lastDt; }
+        if (GetAsyncKeyState('A') & 0x8000) { playerX -= 60.0 * lastDt; }
+        if (GetAsyncKeyState('D') & 0x8000) { playerX += 60.0 * lastDt; }
+        if (GetAsyncKeyState('W') & 0x8000) { playerY -= 50.0 * lastDt; }
+        if (GetAsyncKeyState('S') & 0x8000) { playerY += 50.0 * lastDt; }
+        shooter_console::clearInputBuffer(); // Prevent accumulated keys from echoing after game ends
 #else
         char inKey = shooter_console::getInput();
         if (inKey == 'W' || inKey == 'A' || inKey == 'S' || inKey == 'D') {
             linuxLastDir = inKey;
-            linuxDirKeepAlive = 3; 
+            linuxDirKeepAlive = 15; // slightly reduced momentum for snappier direction change
         } else if (inKey != 0) {
             linuxLastDir = 0;      
         }
 
         if (linuxDirKeepAlive > 0 && linuxLastDir != 0) {
-            if (linuxLastDir == 'W') { playerY -= 30.0 * lastDt; }
-            else if (linuxLastDir == 'S') { playerY += 30.0 * lastDt; }
-            else if (linuxLastDir == 'A') { playerX -= 40.0 * lastDt; }
-            else if (linuxLastDir == 'D') { playerX += 40.0 * lastDt; }
+            if (linuxLastDir == 'W') { playerY -= 70.0 * lastDt; }
+            else if (linuxLastDir == 'S') { playerY += 70.0 * lastDt; }
+            else if (linuxLastDir == 'A') { playerX -= 90.0 * lastDt; }
+            else if (linuxLastDir == 'D') { playerX += 90.0 * lastDt; }
             linuxDirKeepAlive--;
         }
 #endif
@@ -301,8 +311,6 @@ void startShooterGame() {
         auto frameEnd = chrono::steady_clock::now();
         lastDt = chrono::duration<double>(frameEnd - frameStart).count();
         if (lastDt < 0.001) lastDt = 0.016; 
-
-        shooter_console::clearInputBuffer(); // eat remaining keys to prevent echo bug
     }
 
     // End transition

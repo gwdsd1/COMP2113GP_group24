@@ -660,9 +660,9 @@ void startMusicGameInternal() {
         term::moveHome();
 
         term::setBrightCyan();
-        std::cout << "╔════════════════════════════════════════╗\n";
-        std::cout << "║          Stage Select                  ║\n";
-        std::cout << "╚════════════════════════════════════════╝\n\n";
+        std::cout << "+----------------------------------------+\n";
+        std::cout << "|          Stage Select                  |\n";
+        std::cout << "+----------------------------------------+\n\n";
         term::resetColor();
 
         for (size_t i = 0; i < stages.size(); ++i) {
@@ -696,12 +696,23 @@ void startMusicGameInternal() {
             fcntl(STDIN_FILENO, F_SETFL, oldf);
         }
 #endif
-        std::cin.clear();
+        std::cout.flush();
 
         std::string stageInput;
-        std::getline(std::cin, stageInput);
-        stageInput.erase(0, stageInput.find_first_not_of(" \t\r\n"));
-        stageInput.erase(stageInput.find_last_not_of(" \t\r\n") + 1);
+        Input selIn;
+        while (true) {
+            pollInput(selIn);
+            for (char c = '1'; c <= '9'; ++c) {
+                if (selIn.pressed(c)) {
+                    stageInput = std::string(1, c);
+                    break;
+                }
+            }
+            if (!stageInput.empty()) break;
+            std::this_thread::sleep_for(std::chrono::milliseconds(16));
+        }
+
+        std::cout << stageInput << "\n" << std::flush;
 
         // 查找对应关卡
         for (const auto& s : stages) {
