@@ -118,7 +118,11 @@ using namespace std;
 string generateSaveFileName() {
     time_t now = time(0);
     tm localTime;
+#if defined(_WIN32)
     localtime_s(&localTime, &now);
+#else
+    localtime_r(&now, &localTime);
+#endif
 
     stringstream ss;
     ss << "save_"
