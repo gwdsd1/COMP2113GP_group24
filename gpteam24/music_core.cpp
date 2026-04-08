@@ -528,21 +528,21 @@ void showCountdown() {
         // 绘制大号数字效果
         term::moveTo(centerRow - 2, centerCol - 5);
         term::setYellow();
-        std::cout << "═══════════";
-        
+        std::cout << "+---------+";
+
         term::moveTo(centerRow - 1, centerCol - 5);
-        std::cout << "║         ║";
-        
+        std::cout << "|         |";
+
         term::moveTo(centerRow, centerCol - 5);
         term::setRed();
-        std::cout << "║    " << num << "    ║";
-        
+        std::cout << "|    " << num << "    |";
+
         term::moveTo(centerRow + 1, centerCol - 5);
         term::setYellow();
-        std::cout << "║         ║";
-        
+        std::cout << "|         |";
+
         term::moveTo(centerRow + 2, centerCol - 5);
-        std::cout << "═══════════";
+        std::cout << "+---------+";
         
         term::resetColor();
         std::cout.flush();
@@ -559,19 +559,19 @@ void showCountdown() {
     
     term::moveTo(centerRow - 2, centerCol - 5);
     term::setGreen();
-    std::cout << "═══════════";
-    
+    std::cout << "+---------+";
+
     term::moveTo(centerRow - 1, centerCol - 5);
-    std::cout << "║         ║";
-    
+    std::cout << "|         |";
+
     term::moveTo(centerRow, centerCol - 5);
-    std::cout << "║   GO!   ║";
-    
+    std::cout << "|   GO!   |";
+
     term::moveTo(centerRow + 1, centerCol - 5);
-    std::cout << "║         ║";
-    
+    std::cout << "|         |";
+
     term::moveTo(centerRow + 2, centerCol - 5);
-    std::cout << "═══════════";
+    std::cout << "+---------+";
     
     term::resetColor();
     std::cout.flush();
@@ -590,21 +590,21 @@ void showGameOver(const Game& game) {
     // 显示 GAME OVER
     term::moveTo(centerRow, centerCol - 10);
     term::setRed();
-    std::cout << "╔════════════════════╗";
-    
+    std::cout << "+--------------------+";
+
     term::moveTo(centerRow + 1, centerCol - 10);
-    std::cout << "║                    ║";
-    
+    std::cout << "|                    |";
+
     term::moveTo(centerRow + 2, centerCol - 10);
     term::setYellow();
-    std::cout << "║   GAME  OVER!      ║";
-    
+    std::cout << "|   GAME  OVER!      |";
+
     term::moveTo(centerRow + 3, centerCol - 10);
     term::setRed();
-    std::cout << "║                    ║";
-    
+    std::cout << "|                    |";
+
     term::moveTo(centerRow + 4, centerCol - 10);
-    std::cout << "╚════════════════════╝";
+    std::cout << "+--------------------+";
     
     // 显示最终统计
     term::moveTo(centerRow + 6, centerCol - 10);
