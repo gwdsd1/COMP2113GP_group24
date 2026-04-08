@@ -183,7 +183,7 @@ struct Game {
 
     // 判定窗口（单位：行）
     int perfectWindow = 1; // ±1 行
-    int goodWindow = 3; // ±3 行
+    int goodWindow = 2; // ±2 行
 
     // 下落速度与产生频率
     double speedRowsPerSec = 15.0;
@@ -787,12 +787,17 @@ void startMusicGameInternal() {
         renderAcc += frame;
 
         // 输入（非阻塞）
-        pollInput(input);
+        Input tempInput;
+        pollInput(tempInput);
+        for (int i = 0; i < 256; ++i) {
+            if (tempInput.justPressed[i]) input.justPressed[i] = true;
+        }
         if (input.pressed('Q')) running = false;
 
         // 逻辑多步跑满
         while (acc >= dt) {
             game.update(dt, input);
+            input.clear();
             acc -= dt;
         }
         
