@@ -447,12 +447,27 @@ void startMaze(MazeState& state, bool useSavedState) {
         // 吃掉输入缓冲防止换行bug
         console::clearInputBuffer();
 #else
+        // Apply temporary momentum on Linux to bridge across keyboard auto-repeat delay gaps
+        static char linuxLastDir = 0;
+        static int linuxDirKeepAlive = 0;
+
         char inKey = console::getInput();
-        if (inKey == 'W') { nextY--; tryMove = true; }
-        else if (inKey == 'S') { nextY++; tryMove = true; }
-        else if (inKey == 'A') { nextX--; tryMove = true; }
-        else if (inKey == 'D') { nextX++; tryMove = true; }
-        else if (nearNote && inKey == 'E') { doInteract = true; }
+        if (inKey == 'W' || inKey == 'A' || inKey == 'S' || inKey == 'D') {
+            linuxLastDir = inKey;
+            linuxDirKeepAlive = 4; // keep alive for ~240ms 
+        } else if (inKey == 'E' || inKey == 'Q') {
+            linuxLastDir = 0;
+        }
+
+        if (linuxDirKeepAlive > 0 && linuxLastDir != 0) {
+            if (linuxLastDir == 'W') { nextY--; tryMove = true; }
+            else if (linuxLastDir == 'S') { nextY++; tryMove = true; }
+            else if (linuxLastDir == 'A') { nextX--; tryMove = true; }
+            else if (linuxLastDir == 'D') { nextX++; tryMove = true; }
+            linuxDirKeepAlive--;
+        }
+
+        if (inKey == 'E' && nearNote) { doInteract = true; }
         else if (inKey == 'Q') { doQuit = true; }
 #endif
 
