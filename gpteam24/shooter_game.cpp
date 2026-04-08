@@ -5,11 +5,77 @@
 #include <vector>
 #include <chrono>
 #include <thread>
-#include <windows.h>
-#include <conio.h>
 #include <cstdlib>
 
+#if defined(_WIN32)
+#include <windows.h>
+#include <conio.h>
+#else
+#include <unistd.h>
+#include <termios.h>
+#include <fcntl.h>
+#endif
+
 using namespace std;
+
+// --- Cross Platform Console Helpers (from maze.cpp style) ---
+namespace shooter_console {
+    inline void clear() {
+        #if defined(_WIN32)
+        system("cls");
+        #else
+        std::cout << "\x1b[2J\x1b[H";
+        #endif
+    }
+
+    inline char getInput() {
+        char lastChar = 0;
+        #if defined(_WIN32)
+        while (_kbhit()) {
+            int ch = _getch();
+            if (ch == 0 || ch == 224) { _getch(); }
+            else lastChar = (char)std::toupper(ch);
+        }
+        #else
+        char buf[64];
+        ssize_t n = read(STDIN_FILENO, buf, sizeof(buf));
+        if (n > 0) {
+            for (ssize_t i=0; i<n; i++) {
+                if (isalpha(buf[i])) lastChar = (char)std::toupper(buf[i]);
+            }
+        }
+        #endif
+        return lastChar;
+    }
+
+    inline void clearInputBuffer() {
+        getInput();
+    }
+
+#if !defined(_WIN32)
+    struct LinuxTermGuard {
+        termios orig;
+        bool active = false;
+        LinuxTermGuard() {
+            if (!isatty(STDIN_FILENO)) return;
+            tcgetattr(STDIN_FILENO, &orig);
+            termios raw = orig;
+            raw.c_lflag &= ~(ICANON | ECHO);
+            raw.c_cc[VMIN] = 0;
+            raw.c_cc[VTIME] = 0;
+            tcsetattr(STDIN_FILENO, TCSANOW, &raw);
+            int flags = fcntl(STDIN_FILENO, F_GETFL, 0);
+            fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK);
+            active = true;
+        }
+        ~LinuxTermGuard() {
+            if (active) {
+                tcsetattr(STDIN_FILENO, TCSANOW, &orig);
+            }
+        }
+    };
+#endif
+}
 
 // structure for enemies
 struct ShooterEnemy {
@@ -26,15 +92,19 @@ void startShooterGame() {
     // 播放射击游戏背景音乐
     MusicManager::playBackgroundMusic("music/shooter_bg.mp3");
 
+#if defined(_WIN32)
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     
     // Enable VT for ANSI
     DWORD mode = 0;
     GetConsoleMode(hConsole, &mode);
     SetConsoleMode(hConsole, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+#else
+    shooter_console::LinuxTermGuard termGuard;
+#endif
 
     // 1. Transition effect
-    system("cls");
+    shooter_console::clear();
     cout << "\x1b[91m"; // Bright Red
     cout << "\n\nYOU SUDDENLY FEEL A HUGE SHOCK ...THAT IS......\n";
     this_thread::sleep_for(chrono::milliseconds(2000));
@@ -46,17 +116,19 @@ void startShooterGame() {
 
     // 2. Countdown
     for (int i = 3; i >= 1; i--) {
-        system("cls");
+        shooter_console::clear();
         cout << "\x1b[93m\n\n\n\t\t\t" << i << "\x1b[0m\n";
         this_thread::sleep_for(chrono::milliseconds(1000));
     }
-    system("cls");
+    shooter_console::clear();
     cout << "\x1b[92m\n\n\n\t\t\tGO!\x1b[0m\n";
     this_thread::sleep_for(chrono::milliseconds(500));
 
     // Clear buffer
-    while (_kbhit()) _getch();
+    shooter_console::clearInputBuffer();
+#if defined(_WIN32)
     FlushConsoleInputBuffer(GetStdHandle(STD_INPUT_HANDLE));
+#endif
 
     // 3. Game settings
     const int W = 64;
@@ -73,6 +145,12 @@ void startShooterGame() {
     bool running = true;
     double spawnTimer = 0.0;
     double lastDt = 0.016;
+
+#if !defined(_WIN32)
+    // Linux continuous movement simulation vars
+    static char linuxLastDir = 0;
+    static int linuxDirKeepAlive = 0;
+#endif
     
     // Hide cursor
     cout << "\x1b[?25l";
@@ -87,10 +165,28 @@ void startShooterGame() {
         }
 
         // Input
+#if defined(_WIN32)
         if (GetAsyncKeyState('A') & 0x8000) { playerX -= 40.0 * lastDt; }
         if (GetAsyncKeyState('D') & 0x8000) { playerX += 40.0 * lastDt; }
         if (GetAsyncKeyState('W') & 0x8000) { playerY -= 30.0 * lastDt; }
         if (GetAsyncKeyState('S') & 0x8000) { playerY += 30.0 * lastDt; }
+#else
+        char inKey = shooter_console::getInput();
+        if (inKey == 'W' || inKey == 'A' || inKey == 'S' || inKey == 'D') {
+            linuxLastDir = inKey;
+            linuxDirKeepAlive = 3; 
+        } else if (inKey != 0) {
+            linuxLastDir = 0;      
+        }
+
+        if (linuxDirKeepAlive > 0 && linuxLastDir != 0) {
+            if (linuxLastDir == 'W') { playerY -= 30.0 * lastDt; }
+            else if (linuxLastDir == 'S') { playerY += 30.0 * lastDt; }
+            else if (linuxLastDir == 'A') { playerX -= 40.0 * lastDt; }
+            else if (linuxLastDir == 'D') { playerX += 40.0 * lastDt; }
+            linuxDirKeepAlive--;
+        }
+#endif
         
         if (playerX < 0) playerX = 0;
         if (playerX >= W) playerX = W - 1;
@@ -203,16 +299,20 @@ void startShooterGame() {
         auto frameEnd = chrono::steady_clock::now();
         lastDt = chrono::duration<double>(frameEnd - frameStart).count();
         if (lastDt < 0.001) lastDt = 0.016; 
+
+        shooter_console::clearInputBuffer(); // eat remaining keys to prevent echo bug
     }
 
     // End transition
-    system("cls");
+    shooter_console::clear();
     cout << "\x1b[96m\n\nYOU FINALLY HANDLED ALL OF THESE......\x1b[0m\n";
     this_thread::sleep_for(chrono::milliseconds(2000));
     
     // Clear buffer again
     cout << "\x1b[?25h"; // Show cursor
+#if defined(_WIN32)
     SetConsoleMode(hConsole, mode); // Restore orig mode
-    while (_kbhit()) _getch();
     FlushConsoleInputBuffer(GetStdHandle(STD_INPUT_HANDLE));
+#endif
+    shooter_console::clearInputBuffer();
 }
