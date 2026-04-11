@@ -9,6 +9,7 @@
 #include <fstream>
 #include <ctime>
 #include <sstream>
+#include "snake_game.cpp"
 
 #if defined(_WIN32)
 #include <windows.h>
@@ -29,11 +30,13 @@ namespace console {
         if (code == 1) SetConsoleTextAttribute(hConsole, FOREGROUND_BLUE | FOREGROUND_INTENSITY);
         else if (code == 2) SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY);
         else if (code == 3) SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_INTENSITY);
+        else if (code == 4) SetConsoleTextAttribute(hConsole, FOREGROUND_GREEN | FOREGROUND_INTENSITY);
         else SetConsoleTextAttribute(hConsole, 7);
         #else
         if (code == 1) std::cout << "\x1b[94m";
         else if (code == 2) std::cout << "\x1b[93m";
         else if (code == 3) std::cout << "\x1b[91m";
+        else if (code == 4) std::cout << "\x1b[92m";
         else std::cout << "\x1b[0m";
         #endif
     }
