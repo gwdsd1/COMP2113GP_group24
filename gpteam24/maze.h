@@ -10,6 +10,8 @@ struct MazeState{
     int noteY[3];
     int shooterX[3];
     int shooterY[3];
+    int snakeX[3];
+    int snakeY[3];
 };
 void startMaze();
 void startMaze(MazeState& state, bool useSavedState);
