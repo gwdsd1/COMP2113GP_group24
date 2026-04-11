@@ -16,9 +16,7 @@
 #include <conio.h>
 #else
 #include <unistd.h>
-#include <termios.h>console::clear();
-cout << "Use W/A/S/D to move. Press Q to quit maze.\n\n";
-
+#include <termios.h>
 #include <fcntl.h>
 #endif
 #include <thread>
@@ -333,6 +331,23 @@ void startMaze(MazeState& state, bool useSavedState) {
                 (snakeX[i] == shooterX[0] && snakeY[i] == shooterY[0]) ||
                 (snakeX[i] == shooterX[1] && snakeY[i] == shooterY[1]) ||
                 (snakeX[i] == shooterX[2] && snakeY[i] == shooterY[2]));
+        }
+    } else {
+        // 如果是旧存档加载（snakeX/Y == -1），那么即使在加载存档模式下，也需重新生成贪吃蛇位置
+        for (int i = 0; i < 3; i++) {
+            if (snakeX[i] == -1 || snakeY[i] == -1) {
+                do {
+                    snakeX[i] = rand() % MAZE_WIDTH;
+                    snakeY[i] = rand() % MAZE_HEIGHT;
+                } while (maze[snakeY[i]][snakeX[i]] == '#' ||
+                    (snakeX[i] >= 29 && snakeX[i] <= 31 && snakeY[i] >= 14 && snakeY[i] <= 16) ||
+                    (snakeX[i] == noteX[0] && snakeY[i] == noteY[0]) ||
+                    (snakeX[i] == noteX[1] && snakeY[i] == noteY[1]) ||
+                    (snakeX[i] == noteX[2] && snakeY[i] == noteY[2]) ||
+                    (snakeX[i] == shooterX[0] && snakeY[i] == shooterY[0]) ||
+                    (snakeX[i] == shooterX[1] && snakeY[i] == shooterY[1]) ||
+                    (snakeX[i] == shooterX[2] && snakeY[i] == shooterY[2]));
+            }
         }
     }
 

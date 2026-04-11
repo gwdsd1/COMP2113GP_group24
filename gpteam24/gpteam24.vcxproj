@@ -136,6 +136,7 @@
     <ClCompile Include="music_game.cpp" />
     <ClCompile Include="music_core.cpp" />
     <ClCompile Include="shooter_game.cpp" />
+    <ClCompile Include="snake_game.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="game.h" />
@@ -146,6 +147,7 @@
     <ClInclude Include="MusicPlayer.h" />
     <ClInclude Include="ChartLoader.h" />
     <ClInclude Include="shooter_game.h" />
+    <ClInclude Include="snake_game.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".DS_Store" />
@@ -154,6 +156,7 @@
     <None Include="charts\r-906_manimani.chart" />
     <None Include="charts\yorushika_paddle.chart" />
     <None Include="charts\zutomayo_justice.chart" />
+    <None Include="gpteam24_game" />
     <None Include="Makefile" />
   </ItemGroup>
   <ItemGroup>
@@ -163,12 +166,12 @@
     <Media Include="music\n-buna_because_summer_will_end.mp3" />
     <Media Include="music\r-906_manimani.mp3" />
     <Media Include="music\shooter_bg.mp3" />
+    <Media Include="music\snake_bg.mp3" />
     <Media Include="music\yorushika_paddle.mp3" />
     <Media Include="music\zutomayo_justice.mp3" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="save.txt" />
-    <Text Include="save_2026_04_06_23_20_28.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
