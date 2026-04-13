@@ -5,7 +5,7 @@
 
 constexpr int ENEMY_COUNT = 4;
 
-struct MazeState{
+struct MazeState {
     int playerX;
     int playerY;
 
@@ -18,17 +18,14 @@ struct MazeState{
     int snakeX[3];
     int snakeY[3];
 
-    // 新增：怪物
     int enemyX[ENEMY_COUNT];
     int enemyY[ENEMY_COUNT];
 
-    // 每只怪物的活动矩形范围
     int enemyMinX[ENEMY_COUNT];
     int enemyMaxX[ENEMY_COUNT];
     int enemyMinY[ENEMY_COUNT];
     int enemyMaxY[ENEMY_COUNT];
 
-    // 巡逻方向：-1 表示向左，1 表示向右
     int enemyDir[ENEMY_COUNT];
 };
 
