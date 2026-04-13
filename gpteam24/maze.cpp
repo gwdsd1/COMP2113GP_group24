@@ -3,6 +3,7 @@
 #include "shooter_game.h"
 #include "snake_game.h"           // ← 新增
 #include "MusicManager.h"
+#include "enemy_quiz.h"
 #include <iostream>
 #include <string>
 #include <cstdlib>
@@ -10,6 +11,8 @@
 #include <fstream>
 #include <ctime>
 #include <sstream>
+#include <cctype>
+
 
 #if defined(_WIN32)
 #include <windows.h>
@@ -26,20 +29,22 @@
 namespace console {
     inline void setColor(int code) {
 #if defined(_WIN32)
-        HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-        if (code == 1) SetConsoleTextAttribute(hConsole, FOREGROUND_BLUE | FOREGROUND_INTENSITY);
-        else if (code == 2) SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY);
-        else if (code == 3) SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_INTENSITY);
-        else if (code == 4) SetConsoleTextAttribute(hConsole, FOREGROUND_GREEN | FOREGROUND_INTENSITY);  // ← 新增: 绿色
-        else SetConsoleTextAttribute(hConsole, 7);
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (code == 1) SetConsoleTextAttribute(hConsole, FOREGROUND_BLUE | FOREGROUND_INTENSITY);
+    else if (code == 2) SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY);
+    else if (code == 3) SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_INTENSITY);
+    else if (code == 4) SetConsoleTextAttribute(hConsole, FOREGROUND_GREEN | FOREGROUND_INTENSITY);
+    else if (code == 5) SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_INTENSITY);
+    else SetConsoleTextAttribute(hConsole, 7);
 #else
-        if (code == 1) std::cout << "\x1b[94m";
-        else if (code == 2) std::cout << "\x1b[93m";
-        else if (code == 3) std::cout << "\x1b[91m";
-        else if (code == 4) std::cout << "\x1b[92m";   // ← 新增: 绿色
-        else std::cout << "\x1b[0m";
+    if (code == 1) std::cout << "\x1b[94m";
+    else if (code == 2) std::cout << "\x1b[93m";
+    else if (code == 3) std::cout << "\x1b[91m";
+    else if (code == 4) std::cout << "\x1b[92m";
+    else if (code == 5) std::cout << "\x1b[95m";
+    else std::cout << "\x1b[0m";
 #endif
-    }
+}
 
     inline void setPos(int x, int y) {
 #if defined(_WIN32)
@@ -200,10 +205,167 @@ bool saveMazeStateToFile(const string& filename, const MazeState& state) {
     for (int i = 0; i < 3; i++) {
         fout << state.snakeX[i] << ' ' << state.snakeY[i] << '\n';
     }
+    
+    for (int i = 0; i < ENEMY_COUNT; i++) {
+    fout << state.enemyX[i] << ' ' << state.enemyY[i] << '\n';
+    }
+    for (int i = 0; i < ENEMY_COUNT; i++) {
+    fout << state.enemyMinX[i] << ' ' << state.enemyMaxX[i] << ' '
+         << state.enemyMinY[i] << ' ' << state.enemyMaxY[i] << ' '
+         << state.enemyDir[i] << '\n';
+    }
 
     fout.close();
     return true;
 }
+
+bool isBlockedByStaticObjects(const MazeState& state, int x, int y);
+bool isBlockedByOtherEnemies(const MazeState& state, int x, int y, int ignoreIdx);
+
+void initEnemies(MazeState& state, const string maze[], int W, int H) {
+    for (int i = 0; i < ENEMY_COUNT; i++) {
+        do {
+            state.enemyX[i] = rand() % W;
+            state.enemyY[i] = rand() % H;
+        } while (
+            maze[state.enemyY[i]][state.enemyX[i]] == '#' ||
+            (state.enemyX[i] == state.playerX && state.enemyY[i] == state.playerY) ||
+            isBlockedByStaticObjects(state, state.enemyX[i], state.enemyY[i]) ||
+            isBlockedByOtherEnemies(state, state.enemyX[i], state.enemyY[i], i)
+        );
+
+        state.enemyMinX[i] = max(1, state.enemyX[i] - 3);
+        state.enemyMaxX[i] = min(W - 2, state.enemyX[i] + 3);
+        state.enemyMinY[i] = max(1, state.enemyY[i] - 2);
+        state.enemyMaxY[i] = min(H - 2, state.enemyY[i] + 2);
+
+        state.enemyDir[i] = (i % 2 == 0) ? 1 : -1;
+    }
+}
+
+
+void resetOneEnemy(MazeState& state, const string maze[], int W, int H, int idx) {
+    do {
+        state.enemyX[idx] = rand() % W;
+        state.enemyY[idx] = rand() % H;
+    } while (
+        maze[state.enemyY[idx]][state.enemyX[idx]] == '#' ||
+        (state.enemyX[idx] == state.playerX && state.enemyY[idx] == state.playerY) ||
+        isBlockedByStaticObjects(state, state.enemyX[idx], state.enemyY[idx]) ||
+        isBlockedByOtherEnemies(state, state.enemyX[idx], state.enemyY[idx], idx)
+    );
+
+    state.enemyMinX[idx] = max(1, state.enemyX[idx] - 3);
+    state.enemyMaxX[idx] = min(W - 2, state.enemyX[idx] + 3);
+    state.enemyMinY[idx] = max(1, state.enemyY[idx] - 2);
+    state.enemyMaxY[idx] = min(H - 2, state.enemyY[idx] + 2);
+    state.enemyDir[idx] = 1;
+}
+
+
+//判断格子能不能走
+bool isInside(int x, int y, int W, int H) {
+    return x >= 0 && x < W && y >= 0 && y < H;
+}
+
+bool isBlockedByStaticObjects(const MazeState& state, int x, int y) {
+    for (int i = 0; i < 3; i++) {
+        if (state.noteX[i] == x && state.noteY[i] == y) return true;
+        if (state.shooterX[i] == x && state.shooterY[i] == y) return true;
+        if (state.snakeX[i] == x && state.snakeY[i] == y) return true;
+    }
+    return false;
+}
+
+bool isBlockedByOtherEnemies(const MazeState& state, int x, int y, int ignoreIdx) {
+    for (int i = 0; i < ENEMY_COUNT; i++) {
+        if (i == ignoreIdx) continue;
+        if (state.enemyX[i] == x && state.enemyY[i] == y) return true;
+    }
+    return false;
+}
+
+bool canEnemyStandAt(const string maze[], int W, int H,
+                     const MazeState& state, int x, int y, int ignoreIdx) {
+    if (!isInside(x, y, W, H)) return false;
+    if (maze[y][x] == '#') return false;
+    if (isBlockedByStaticObjects(state, x, y)) return false;
+    if (isBlockedByOtherEnemies(state, x, y, ignoreIdx)) return false;
+    return true;
+}
+
+bool playerInEnemyZone(const MazeState& state, int i) {
+    return state.playerX >= state.enemyMinX[i] && state.playerX <= state.enemyMaxX[i] &&
+           state.playerY >= state.enemyMinY[i] && state.playerY <= state.enemyMaxY[i];
+}
+
+void updateEnemies(MazeState& state, const string maze[], int W, int H) {
+    for (int i = 0; i < ENEMY_COUNT; i++) {
+        int ex = state.enemyX[i];
+        int ey = state.enemyY[i];
+
+        int dist = abs(state.playerX - ex) + abs(state.playerY - ey);
+        bool shouldChase = playerInEnemyZone(state, i) && dist <= 5;
+
+        if (shouldChase) {
+            int nx = ex;
+            int ny = ey;
+
+            // 先尝试横向追
+            if (state.playerX < ex) nx--;
+            else if (state.playerX > ex) nx++;
+
+            bool moved = false;
+            if (nx >= state.enemyMinX[i] && nx <= state.enemyMaxX[i] &&
+                canEnemyStandAt(maze, W, H, state, nx, ey, i) &&
+                !(nx == state.playerX && ey == state.playerY)) {
+                state.enemyX[i] = nx;
+                moved = true;
+            }
+
+            // 横向不行再尝试纵向
+            if (!moved) {
+                nx = ex;
+                ny = ey;
+                if (state.playerY < ey) ny--;
+                else if (state.playerY > ey) ny++;
+
+                if (ny >= state.enemyMinY[i] && ny <= state.enemyMaxY[i] &&
+                    canEnemyStandAt(maze, W, H, state, ex, ny, i) &&
+                    !(ex == state.playerX && ny == state.playerY)) {
+                    state.enemyY[i] = ny;
+                }
+            }
+        } else {
+            // 慢速水平巡逻
+            int nx = ex + state.enemyDir[i];
+
+            if (nx < state.enemyMinX[i] || nx > state.enemyMaxX[i] ||
+                !canEnemyStandAt(maze, W, H, state, nx, ey, i)) {
+                state.enemyDir[i] *= -1;
+                nx = ex + state.enemyDir[i];
+
+                if (nx >= state.enemyMinX[i] && nx <= state.enemyMaxX[i] &&
+                    canEnemyStandAt(maze, W, H, state, nx, ey, i)) {
+                    state.enemyX[i] = nx;
+                }
+            } else {
+                state.enemyX[i] = nx;
+            }
+        }
+    }
+}
+
+int findTriggeredEnemy(const MazeState& state) {
+    for (int i = 0; i < ENEMY_COUNT; i++) {
+        int dist = abs(state.playerX - state.enemyX[i]) + abs(state.playerY - state.enemyY[i]);
+        if (dist <= 1) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 
 bool loadMazeStateFromFile(const string& filename, MazeState& state) {
     ifstream fin(filename);
@@ -221,7 +383,7 @@ bool loadMazeStateFromFile(const string& filename, MazeState& state) {
         fin >> state.shooterX[i] >> state.shooterY[i];
     }
 
-    // ← 新增：读取贪吃蛇坐标（兼容旧存档）
+    // 兼容旧存档
     for (int i = 0; i < 3; i++) {
         if (!(fin >> state.snakeX[i] >> state.snakeY[i])) {
             state.snakeX[i] = -1;
@@ -229,8 +391,107 @@ bool loadMazeStateFromFile(const string& filename, MazeState& state) {
         }
     }
 
+    // 兼容旧存档
+    for (int i = 0; i < ENEMY_COUNT; i++) {
+        if (!(fin >> state.enemyX[i] >> state.enemyY[i])) {
+            state.enemyX[i] = -1;
+            state.enemyY[i] = -1;
+        }
+    }
+
+    for (int i = 0; i < ENEMY_COUNT; i++) {
+        if (!(fin >> state.enemyMinX[i] >> state.enemyMaxX[i]
+                  >> state.enemyMinY[i] >> state.enemyMaxY[i]
+                  >> state.enemyDir[i])) {
+            state.enemyMinX[i] = -1;
+            state.enemyMaxX[i] = -1;
+            state.enemyMinY[i] = -1;
+            state.enemyMaxY[i] = -1;
+            state.enemyDir[i] = 1;
+        }
+    }
+
     fin.close();
     return true;
+}
+
+void drawMazeFrame(const MazeState& state, const string maze[], int W, int H, bool nearNote) {
+    console::clear();
+    cout << "Use W/A/S/D to move. Press Q to quit maze.";
+    if (nearNote) cout << "  Press E to interact.";
+    cout << "\n\n";
+
+    for (int y = 0; y < H; y++) {
+        for (int x = 0; x < W; x++) {
+            if (x == state.playerX && y == state.playerY) {
+                console::setColor(1);
+                cout << '@';
+                console::setColor(0);
+                continue;
+            }
+
+            bool isEnemy = false;
+            for (int i = 0; i < ENEMY_COUNT; i++) {
+                if (state.enemyX[i] == x && state.enemyY[i] == y) {
+                    isEnemy = true;
+                    break;
+                }
+            }
+            if (isEnemy) {
+                console::setColor(5);
+                cout << 'G';
+                console::setColor(0);
+                continue;
+            }
+
+            bool isNote = false;
+            for (int i = 0; i < 3; i++) {
+                if (state.noteX[i] == x && state.noteY[i] == y) {
+                    isNote = true;
+                    break;
+                }
+            }
+            if (isNote) {
+                console::setColor(2);
+                cout << '&';
+                console::setColor(0);
+                continue;
+            }
+
+            bool isShooter = false;
+            for (int i = 0; i < 3; i++) {
+                if (state.shooterX[i] == x && state.shooterY[i] == y) {
+                    isShooter = true;
+                    break;
+                }
+            }
+            if (isShooter) {
+                console::setColor(3);
+                cout << '!';
+                console::setColor(0);
+                continue;
+            }
+
+            bool isSnake = false;
+            for (int i = 0; i < 3; i++) {
+                if (state.snakeX[i] == x && state.snakeY[i] == y) {
+                    isSnake = true;
+                    break;
+                }
+            }
+            if (isSnake) {
+                console::setColor(4);
+                cout << 'S';
+                console::setColor(0);
+                continue;
+            }
+
+            cout << (maze[y][x] == '#' ? '#' : ' ');
+        }
+        cout << '\n';
+    }
+
+    std::cout.flush();
 }
 
 void startMaze() {
@@ -293,6 +554,7 @@ void startMaze(MazeState& state, bool useSavedState) {
     int* snakeX = state.snakeX;       // ← 新增
     int* snakeY = state.snakeY;       // ← 新增
 
+
     if (!useSavedState) {
         playerX = 30;
         playerY = 15;
@@ -332,7 +594,20 @@ void startMaze(MazeState& state, bool useSavedState) {
                 (snakeX[i] == shooterX[1] && snakeY[i] == shooterY[1]) ||
                 (snakeX[i] == shooterX[2] && snakeY[i] == shooterY[2]));
         }
+    initEnemies(state, maze, MAZE_WIDTH, MAZE_HEIGHT);
     } else {
+    bool needInitEnemy = false;
+for (int i = 0; i < ENEMY_COUNT; i++) {
+    if (state.enemyX[i] == -1 || state.enemyY[i] == -1 ||
+        state.enemyMinX[i] == -1 || state.enemyMaxX[i] == -1 ||
+        state.enemyMinY[i] == -1 || state.enemyMaxY[i] == -1) {
+        needInitEnemy = true;
+        break;
+    }
+}
+if (needInitEnemy) {
+    initEnemies(state, maze, MAZE_WIDTH, MAZE_HEIGHT);
+}
         // 如果是旧存档加载（snakeX/Y == -1），那么即使在加载存档模式下，也需重新生成贪吃蛇位置
         for (int i = 0; i < 3; i++) {
             if (snakeX[i] == -1 || snakeY[i] == -1) {
@@ -346,7 +621,8 @@ void startMaze(MazeState& state, bool useSavedState) {
                     (snakeX[i] == noteX[2] && snakeY[i] == noteY[2]) ||
                     (snakeX[i] == shooterX[0] && snakeY[i] == shooterY[0]) ||
                     (snakeX[i] == shooterX[1] && snakeY[i] == shooterY[1]) ||
-                    (snakeX[i] == shooterX[2] && snakeY[i] == shooterY[2]));
+                    (snakeX[i] == shooterX[2] && snakeY[i] == shooterY[2]) || 
+                    isBlockedByOtherEnemies(state, snakeX[i], snakeY[i], -1));
             }
         }
     }
@@ -358,51 +634,16 @@ void startMaze(MazeState& state, bool useSavedState) {
     console::LinuxTermGuard termGuard;
 #endif
 
-    // 首次绘制迷宫
-    for (int y = 0; y < MAZE_HEIGHT; y++) {
-        for (int x = 0; x < MAZE_WIDTH; x++) {
-            if (x == playerX && y == playerY) {
-                console::setColor(1);
-                cout << '@';
-                console::setColor(0);
-            }
-            else {
-                bool isNote = false;
-                for (int i = 0; i < 3; i++) { if (x == noteX[i] && y == noteY[i]) isNote = true; }
-                bool isShooter = false;
-                for (int i = 0; i < 3; i++) { if (x == shooterX[i] && y == shooterY[i]) isShooter = true; }
-                bool isSnake = false;                                          // ← 新增
-                for (int i = 0; i < 3; i++) { if (x == snakeX[i] && y == snakeY[i]) isSnake = true; }
-
-                if (isNote) {
-                    console::setColor(2);
-                    cout << '&';
-                    console::setColor(0);
-                }
-                else if (isShooter) {
-                    console::setColor(3);
-                    cout << '!';
-                    console::setColor(0);
-                }
-                else if (isSnake) {                                          // ← 新增
-                    console::setColor(4);
-                    cout << 'S';
-                    console::setColor(0);
-                }
-                else if (maze[y][x] == '#') {
-                    cout << '#';
-                }
-                else {
-                    cout << ' ';
-                }
-            }
-        }
-        cout << '\n';
-    }
+    bool nearNote = false;
+    drawMazeFrame(state, maze, MAZE_WIDTH, MAZE_HEIGHT, nearNote);
 
     bool inMaze = true;
     const int MOVE_DELAY_MS = 60;
     console::clearInputBuffer();
+    
+    int enemyTick = 0;
+    const int ENEMY_MOVE_INTERVAL = 3; // 3 个玩家循环才动 1 次
+
 
     while (inMaze) {
         // ===================== 自动触发弹幕射击 =====================
@@ -418,6 +659,7 @@ void startMaze(MazeState& state, bool useSavedState) {
             startShooterGame();
             MusicManager::playBackgroundMusic("music/maze_bg.mp3");
 
+
             for (int i = 0; i < 3; i++) {
                 do {
                     shooterX[i] = rand() % MAZE_WIDTH;
@@ -429,7 +671,8 @@ void startMaze(MazeState& state, bool useSavedState) {
                     (shooterX[i] == noteX[2] && shooterY[i] == noteY[2]) ||
                     (shooterX[i] == snakeX[0] && shooterY[i] == snakeY[0]) ||
                     (shooterX[i] == snakeX[1] && shooterY[i] == snakeY[1]) ||
-                    (shooterX[i] == snakeX[2] && shooterY[i] == snakeY[2]));
+                    (shooterX[i] == snakeX[2] && shooterY[i] == snakeY[2])|| 
+                    isBlockedByOtherEnemies(state, shooterX[i], shooterY[i], -1));
             }
 
             // ---- 重绘迷宫 ----
@@ -486,7 +729,8 @@ void startMaze(MazeState& state, bool useSavedState) {
                     (snakeX[i] == noteX[2] && snakeY[i] == noteY[2]) ||
                     (snakeX[i] == shooterX[0] && snakeY[i] == shooterY[0]) ||
                     (snakeX[i] == shooterX[1] && snakeY[i] == shooterY[1]) ||
-                    (snakeX[i] == shooterX[2] && snakeY[i] == shooterY[2]));
+                    (snakeX[i] == shooterX[2] && snakeY[i] == shooterY[2])|| 
+                    isBlockedByOtherEnemies(state, snakeX[i], snakeY[i], -1));
             }
 
             // 重绘迷宫
@@ -571,11 +815,14 @@ void startMaze(MazeState& state, bool useSavedState) {
 
             for (int i = 0; i < 3; i++) {
                 do {
-                    noteX[i] = rand() % MAZE_WIDTH;
-                    noteY[i] = rand() % MAZE_HEIGHT;
-                } while (maze[noteY[i]][noteX[i]] == '#' || (noteX[i] == playerX && noteY[i] == playerY));
-            }
-
+    noteX[i] = rand() % MAZE_WIDTH;
+    noteY[i] = rand() % MAZE_HEIGHT;
+} while (
+    maze[noteY[i]][noteX[i]] == '#' ||
+    (noteX[i] == playerX && noteY[i] == playerY) ||
+    isBlockedByOtherEnemies(state, noteX[i], noteY[i], -1)
+);
+}
             console::clear();
             cout << "Use W/A/S/D to move. Press Q to quit maze.\n\n";
             for (int y = 0; y < MAZE_HEIGHT; y++) {
@@ -604,65 +851,54 @@ void startMaze(MazeState& state, bool useSavedState) {
             continue;
         }
         else if (doQuit) {
-            console::setPos(0, MAZE_HEIGHT + 4);
-            string filename = generateSaveFileName();
-            if (saveMazeStateToFile(filename, state)) {
-                cout << "Game saved to " << filename;
-            }
-            else {
-                cout << "Failed to save game.";
-            }
-            console::sleep(500);
-            inMaze = false;
+        console::setPos(0, MAZE_HEIGHT + 4);
+        string filename = generateSaveFileName();
+        if (saveMazeStateToFile(filename, state)) {
+            cout << "Game saved to " << filename;
         }
-
-        // 碰撞检测与移动
-        if (tryMove && nextX >= 0 && nextX < MAZE_WIDTH && nextY >= 0 && nextY < MAZE_HEIGHT) {
-            if (maze[nextY][nextX] != '#') {
-                int oldX = playerX;
-                int oldY = playerY;
-                console::setPos(oldX, oldY + 2);
-                cout << ' ';
-
-                playerX = nextX;
-                playerY = nextY;
-
-                console::setPos(playerX, playerY + 2);
-                console::setColor(1);
-                cout << '@';
-                console::setColor(0);
-
-                // 恢复旧位置被覆盖的图标
-                bool redrew = false;
-                for (int i = 0; i < 3; i++) {
-                    if (oldX == noteX[i] && oldY == noteY[i]) {
-                        console::setPos(oldX, oldY + 2);
-                        console::setColor(2); cout << '&'; console::setColor(0);
-                        redrew = true; break;
-                    }
-                }
-                if (!redrew) {
-                    for (int i = 0; i < 3; i++) {
-                        if (oldX == shooterX[i] && oldY == shooterY[i]) {
-                            console::setPos(oldX, oldY + 2);
-                            console::setColor(3); cout << '!'; console::setColor(0);
-                            redrew = true; break;
-                        }
-                    }
-                }
-                if (!redrew) {                                                 // ← 新增
-                    for (int i = 0; i < 3; i++) {
-                        if (oldX == snakeX[i] && oldY == snakeY[i]) {
-                            console::setPos(oldX, oldY + 2);
-                            console::setColor(4); cout << 'S'; console::setColor(0);
-                            break;
-                        }
-                    }
-                }
-            }
+        else {
+            cout << "Failed to save game.";
         }
+        console::sleep(500);
+        inMaze = false;
+        continue;
+    }
 
-        std::cout.flush();
+    if (tryMove && nextX >= 0 && nextX < MAZE_WIDTH && nextY >= 0 && nextY < MAZE_HEIGHT) {
+    if (maze[nextY][nextX] != '#') {
+        playerX = nextX;
+        playerY = nextY;
+    }
+}
+
+enemyTick++;
+if (enemyTick >= ENEMY_MOVE_INTERVAL) {
+    updateEnemies(state, maze, MAZE_WIDTH, MAZE_HEIGHT);
+    enemyTick = 0;
+}
+
+int hitEnemy = findTriggeredEnemy(state);
+if (hitEnemy != -1) {
+    bool win = startEnemyQuiz();
+    MusicManager::playBackgroundMusic("music/maze_bg.mp3");
+
+    // 把怪物重新放开
+    resetOneEnemy(state, maze, MAZE_WIDTH, MAZE_HEIGHT, hitEnemy);
+
+    console::clearInputBuffer();
+}
+
+
+    std::cout.flush();
+    nearNote = false;
+for (int i = 0; i < 3; i++) {
+    if (abs(playerX - noteX[i]) <= 1 && abs(playerY - noteY[i]) <= 1) {
+        nearNote = true;
+        break;
+    }
+}
+
+drawMazeFrame(state, maze, MAZE_WIDTH, MAZE_HEIGHT, nearNote);
         console::sleep(MOVE_DELAY_MS);
     }
 
