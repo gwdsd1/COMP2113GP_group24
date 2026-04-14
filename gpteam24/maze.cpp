@@ -28,6 +28,7 @@
 
 using namespace std;
 
+// 控制台相关工具：负责颜色、清屏、光标、跨平台输入
 namespace console {
     inline void setColor(int code) {
 #if defined(_WIN32)
@@ -198,6 +199,7 @@ vector<string> getSaveFiles() {
     return saveFiles;
 }
 
+// 把迷宫当前状态全部写入文件，供下次读档恢复
 bool saveMazeStateToFile(const string& filename, const MazeState& state) {
     ofstream fout(filename);
     if (!fout) return false;
@@ -239,6 +241,7 @@ bool isBlockedByOtherEnemies(const MazeState& state, int x, int y, int ignoreIdx
     return false;
 }
 
+// 随机初始化 4 个怪物，并给每只怪物分配一个活动区域
 void initEnemies(MazeState& state, const string maze[], int W, int H) {
     for (int i = 0; i < ENEMY_COUNT; i++) {
         do {
@@ -259,6 +262,7 @@ void initEnemies(MazeState& state, const string maze[], int W, int H) {
     }
 }
 
+// 打完问答小游戏后，把触发过的怪物重新放到别处
 void resetOneEnemy(MazeState& state, const string maze[], int W, int H, int idx) {
     do {
         state.enemyX[idx] = rand() % W;
@@ -277,6 +281,7 @@ void resetOneEnemy(MazeState& state, const string maze[], int W, int H, int idx)
     state.enemyDir[idx] = 1;
 }
 
+// 判断怪物是否能站在某一格：不能越界、不能穿墙、不能压住入口或别的怪物
 bool canEnemyStandAt(const string maze[], int W, int H,
                      const MazeState& state, int x, int y, int ignoreIdx) {
     if (!isInside(x, y, W, H)) return false;
@@ -286,11 +291,13 @@ bool canEnemyStandAt(const string maze[], int W, int H,
     return true;
 }
 
+// 判断玩家是否处于第 i 只怪物的活动区域内
 bool playerInEnemyZone(const MazeState& state, int i) {
     return state.playerX >= state.enemyMinX[i] && state.playerX <= state.enemyMaxX[i] &&
            state.playerY >= state.enemyMinY[i] && state.playerY <= state.enemyMaxY[i];
 }
 
+// 怪物逻辑：玩家靠近时追一步，否则在自己的区域内慢速水平巡逻
 void updateEnemies(MazeState& state, const string maze[], int W, int H) {
     for (int i = 0; i < ENEMY_COUNT; i++) {
         int ex = state.enemyX[i];
@@ -342,6 +349,7 @@ void updateEnemies(MazeState& state, const string maze[], int W, int H) {
     }
 }
 
+// 玩家贴近怪物时返回对应怪物编号，否则返回 -1
 int findTriggeredEnemy(const MazeState& state) {
     for (int i = 0; i < ENEMY_COUNT; i++) {
         int dist = abs(state.playerX - state.enemyX[i]) + abs(state.playerY - state.enemyY[i]);
@@ -387,6 +395,7 @@ bool loadMazeStateFromFile(const string& filename, MazeState& state) {
     return true;
 }
 
+// 整屏重绘迷宫
 void drawMazeFrame(const MazeState& state, const string maze[], int W, int H, bool nearNote) {
     console::setPos(0, 0);
     cout << "Use W/A/S/D to move. Press Q to quit maze.";
@@ -471,6 +480,7 @@ void startMaze() {
     startMaze(state, false);
 }
 
+
 void startMaze(MazeState& state, bool useSavedState) {
     MusicManager::playBackgroundMusic("music/maze_bg.mp3");
     srand(static_cast<unsigned int>(time(0)));
@@ -511,6 +521,7 @@ void startMaze(MazeState& state, bool useSavedState) {
         "#############################################################"
     };
 
+    // 清出中心出生点周围的 3x3 区域，确保玩家出生后可移动
     for (int dy = -1; dy <= 1; dy++) {
         for (int dx = -1; dx <= 1; dx++) {
             maze[15 + dy][30 + dx] = '.';
@@ -530,6 +541,7 @@ void startMaze(MazeState& state, bool useSavedState) {
         playerX = 30;
         playerY = 15;
 
+        // 新开游戏时随机放置三个音游入口
         for (int i = 0; i < 3; i++) {
             do {
                 noteX[i] = rand() % MAZE_WIDTH;
@@ -538,6 +550,7 @@ void startMaze(MazeState& state, bool useSavedState) {
                      (noteX[i] >= 29 && noteX[i] <= 31 && noteY[i] >= 14 && noteY[i] <= 16));
         }
 
+        // 随机放置三个弹幕入口
         for (int i = 0; i < 3; i++) {
             do {
                 shooterX[i] = rand() % MAZE_WIDTH;
@@ -549,6 +562,7 @@ void startMaze(MazeState& state, bool useSavedState) {
                      (shooterX[i] == noteX[2] && shooterY[i] == noteY[2]));
         }
 
+        // 随机放置三个贪吃蛇入口
         for (int i = 0; i < 3; i++) {
             do {
                 snakeX[i] = rand() % MAZE_WIDTH;
@@ -613,6 +627,7 @@ void startMaze(MazeState& state, bool useSavedState) {
     console::clearInputBuffer();
 
     while (inMaze) {
+        // 玩家靠近 shooter 入口时自动进入弹幕小游戏
         bool nearShooter = false;
         for (int i = 0; i < 3; i++) {
             if (abs(playerX - shooterX[i]) <= 1 && abs(playerY - shooterY[i]) <= 1) {
@@ -644,6 +659,7 @@ void startMaze(MazeState& state, bool useSavedState) {
             continue;
         }
 
+        // 玩家靠近 snake 入口时自动进入贪吃蛇小游戏
         bool nearSnake = false;
         for (int i = 0; i < 3; i++) {
             if (abs(playerX - snakeX[i]) <= 1 && abs(playerY - snakeY[i]) <= 1) {
@@ -675,6 +691,7 @@ void startMaze(MazeState& state, bool useSavedState) {
             continue;
         }
 
+        // 靠近音符入口时，在顶部显示 E 键提示
         nearNote = false;
         for (int i = 0; i < 3; i++) {
             if (abs(playerX - noteX[i]) <= 1 && abs(playerY - noteY[i]) <= 1) {
@@ -707,6 +724,7 @@ void startMaze(MazeState& state, bool useSavedState) {
         else if (inKey == 'Q') { doQuit = true; }
 #endif
 
+        // 音符入口需要按 E 才进入音游
         if (doInteract) {
             console::sleep(200);
             startMusicGame();
@@ -725,6 +743,7 @@ void startMaze(MazeState& state, bool useSavedState) {
             continue;
         }
 
+        // 按 Q 时保存当前迷宫状态后退出
         if (doQuit) {
             console::setPos(0, MAZE_HEIGHT + 4);
             string filename = generateSaveFileName();
@@ -737,7 +756,8 @@ void startMaze(MazeState& state, bool useSavedState) {
             inMaze = false;
             continue;
         }
-
+        
+        // 玩家只能走到非墙体位置
         if (tryMove && nextX >= 0 && nextX < MAZE_WIDTH && nextY >= 0 && nextY < MAZE_HEIGHT) {
             if (maze[nextY][nextX] != '#') {
                 playerX = nextX;
@@ -751,6 +771,7 @@ void startMaze(MazeState& state, bool useSavedState) {
             enemyTick = 0;
         }
 
+        // 玩家贴近怪物时进入问答小游戏，结束后怪物重置
         int hitEnemy = findTriggeredEnemy(state);
         if (hitEnemy != -1) {
             startEnemyQuiz();
