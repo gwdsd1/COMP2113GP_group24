@@ -42,6 +42,9 @@
     <ClCompile Include="snake_game.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="enemy_quiz.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="game.h">
@@ -69,6 +72,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="snake_game.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="enemy_quiz.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
