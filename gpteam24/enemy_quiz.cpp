@@ -58,6 +58,11 @@ namespace quiz_console {
         return lastChar;
     }
 
+    // 清空残留输入，避免刚进入问答时自动选中第一题答案
+    inline void clearInputBuffer() {
+        getInput();
+    }
+
 #if !defined(_WIN32)
     struct LinuxTermGuard {
         termios orig{};
@@ -98,15 +103,24 @@ struct QuizQuestion {
     char answer;
 };
 
+// 开场剧情：老师突然出现并开始 cold-call
 static void showIntro() {
     quiz_console::clear();
     cout << "A professor suddenly appears from nowhere.\n";
     cout << "\"Leaving already?\" they ask.\n";
     cout << "\"Not until you answer a few questions.\"\n";
-    quiz_console::sleepMs(1800);
+
+    // 停留更久一点，方便看完背景
+    quiz_console::sleepMs(3200);
+
+    // 清掉从迷宫带进来的残留输入
+    quiz_console::clearInputBuffer();
 }
 
 static bool askOneQuestion(const QuizQuestion& q, int index, int total) {
+    // 每题开始前再清一次输入，避免上一题或移动残留按键影响
+    quiz_console::clearInputBuffer();
+
     while (true) {
         quiz_console::clear();
 
@@ -146,88 +160,89 @@ bool startEnemyQuiz() {
 
     showIntro();
 
+    // 10 道题，每次随机抽 3 道
     vector<QuizQuestion> bank = {
-        {
-            "A poster at the entrance of Main Building asks: What is the special ability of a group project?",
-            "Boosting teamwork",
-            "Improving friendship",
-            "Turning one person into the entire team",
-            "Making everyone more productive",
-            'C'
-        },
-        {
-            "At 11:59 PM, a cursed screen inside Main Building lights up. What is most likely to appear?",
-            "A shooting star",
-            "Inner peace",
-            "A newly uploaded assignment",
-            "Free time",
-            'C'
-        },
-        {
-            "A ghost in the tutorial room whispers: What is the real purpose of a tutorial?",
-            "To deepen understanding",
-            "To encourage discussion",
-            "To reveal how little you actually know",
-            "To let you leave early",
-            'C'
-        },
-        {
-            "A shadowy professor blocks the staircase and asks: What is the strongest crowd-control skill used by professors?",
-            "Taking attendance",
-            "Surprise quiz",
-            "\"Can someone answer this?\"",
-            "\"You can read this by yourself.\"",
-            'C'
-        },
-        {
-            "A notice on the wall flashes red: Which enemy attack is the most deadly?",
-            "\"Please submit by Friday\"",
-            "\"This is optional\"",
-            "\"This will not be on the exam\"",
-            "\"You should already know this\"",
-            'D'
-        },
-        {
-            "Near the library corner, the building asks: What is the true purpose of reading week?",
-            "To read",
-            "To rest",
-            "To realize how behind you are",
-            "To discover new hobbies",
-            'C'
-        },
-        {
-            "A locked classroom door asks: What has many keys but still cannot open the Main Building door?",
-            "A piano",
-            "A keycard",
-            "A keyboard",
-            "A janitor",
-            'A'
-        },
-        {
-            "The elevator hums and asks: What goes up every semester but never comes down?",
-            "Your age",
-            "Your workload",
-            "Your attendance",
-            "Your pen count",
-            'B'
-        },
-        {
-            "A cracked mirror in the corridor asks: What gets bigger the more you take away from it?",
-            "A notebook",
-            "A lecture hall",
-            "A backpack",
-            "A hole",
-            'D'
-        },
-        {
-            "At the final exit, Main Building gives one last riddle: What belongs to you, but your group members use it more than you do?",
-            "Your bag",
-            "Your notes",
-            "Your name",
-            "Your water bottle",
-            'C'
-        }
-    };
+    {
+        "What is the special ability of a group project?",
+        "Boosting teamwork",
+        "Improving friendship",
+        "Turning one person into the entire team",
+        "Making everyone more productive",
+        'C'
+    },
+    {
+        "At 11:59 PM, what is most likely to appear?",
+        "A shooting star",
+        "Inner peace",
+        "A newly uploaded assignment",
+        "Free time",
+        'C'
+    },
+    {
+        "What is the real purpose of a tutorial?",
+        "To deepen understanding",
+        "To encourage discussion",
+        "To reveal how little you actually know",
+        "To let you leave early",
+        'C'
+    },
+    {
+        "What is the strongest crowd-control skill used by professors?",
+        "Taking attendance",
+        "Surprise quiz",
+        "\"Can someone answer this?\"",
+        "\"You can read this by yourself.\"",
+        'C'
+    },
+    {
+        "Which enemy attack is the most deadly?",
+        "\"Please submit by Friday\"",
+        "\"This is optional\"",
+        "\"This will not be on the exam\"",
+        "\"You should already know this\"",
+        'D'
+    },
+    {
+        "What is the true purpose of reading week?",
+        "To read",
+        "To rest",
+        "To realize how behind you are",
+        "To discover new hobbies",
+        'C'
+    },
+    {
+        "What has many keys but still cannot open the Main Building door?",
+        "A piano",
+        "A keycard",
+        "A keyboard",
+        "A janitor",
+        'A'
+    },
+    {
+        "What goes up every semester but never comes down?",
+        "Your age",
+        "Your workload",
+        "Your attendance",
+        "Your pen count",
+        'B'
+    },
+    {
+        "What gets bigger the more you take away from it?",
+        "A notebook",
+        "A lecture hall",
+        "A backpack",
+        "A hole",
+        'D'
+    },
+    {
+        "What belongs to you, but your group members use it more than you do?",
+        "Your bag",
+        "Your notes",
+        "Your name",
+        "Your water bottle",
+        'C'
+    }
+};
 
     std::mt19937 rng(static_cast<unsigned int>(std::time(nullptr)));
     std::shuffle(bank.begin(), bank.end(), rng);
