@@ -110,30 +110,33 @@ static void showIntro() {
     cout << "\"Leaving already?\" they ask.\n";
     cout << "\"Not until you answer a few questions.\"\n";
 
-    // 停留更久一点，方便看完背景
-    quiz_console::sleepMs(3200);
+ 
+    quiz_console::sleepMs(4000);
 
-    // 清掉从迷宫带进来的残留输入
+
     quiz_console::clearInputBuffer();
 }
 
 static bool askOneQuestion(const QuizQuestion& q, int index, int total) {
-    // 每题开始前再清一次输入，避免上一题或移动残留按键影响
+   
     quiz_console::clearInputBuffer();
 
+    // 只在进入题目时清屏并绘制一次
+    quiz_console::clear();
+
+    cout << "=== Escape Trial: Main Building ===\n";
+    cout << "Question " << index << " / " << total << "\n\n";
+    cout << q.question << "\n\n";
+    cout << "A. " << q.A << "\n";
+    cout << "B. " << q.B << "\n";
+    cout << "C. " << q.C << "\n";
+    cout << "D. " << q.D << "\n\n";
+    cout << "Press A / B / C / D\n";
+
+   
     while (true) {
-        quiz_console::clear();
-
-        cout << "=== Escape Trial: Main Building ===\n";
-        cout << "Question " << index << " / " << total << "\n\n";
-        cout << q.question << "\n\n";
-        cout << "A. " << q.A << "\n";
-        cout << "B. " << q.B << "\n";
-        cout << "C. " << q.C << "\n";
-        cout << "D. " << q.D << "\n\n";
-        cout << "Press A / B / C / D\n";
-
         char in = quiz_console::getInput();
+
         if (in == 'A' || in == 'B' || in == 'C' || in == 'D') {
             bool correct = (in == q.answer);
 
