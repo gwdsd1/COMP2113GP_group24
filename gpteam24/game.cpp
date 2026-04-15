@@ -96,6 +96,9 @@ void newGame() {
     
     MazeState state;
     startMaze(state, false);
+    
+    // 迷宫结束后重新播放主菜单音乐
+    MusicManager::playBackgroundMusic("music/menu_bg.mp3");
 }
 
 void loadGame() {
@@ -140,6 +143,8 @@ void loadGame() {
         cout << "\nSave file loaded successfully!\n";
         std::this_thread::sleep_for(std::chrono::seconds(1));
         startMaze(state, true);
+        // 迷宫结束后重新播放主菜单音乐
+        MusicManager::playBackgroundMusic("music/menu_bg.mp3");
     } else {
         cout << "\nFailed to load save file.\n";
         cout << "\nPress Enter to return to main menu...";

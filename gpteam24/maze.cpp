@@ -475,6 +475,59 @@ void drawMazeFrame(const MazeState& state, const string maze[], int W, int H, bo
     std::cout.flush();
 }
 
+// ==================== 通关结局显示 ====================
+void showVictoryScreen() {
+    console::clear();
+    console::hideCursor();
+    
+    std::cout << "\n\n\n";
+    std::cout << "    ****************************************************\n\n";
+    std::cout << "         C O N G R A T U L A T I O N S ! ! !\n\n";
+    std::cout << "    ****************************************************\n\n";
+    std::cout << "       You have successfully escaped the maze!\n";
+    std::cout << "       After countless challenges and adventures,\n";
+    std::cout << "       you have proven yourself to be a true hero.\n\n";
+    std::cout << "       Thank you for playing our game!\n\n";
+    std::cout << "    ****************************************************\n\n";
+    std::cout << "\n\n         Press Enter to return to main menu...";
+    std::cout.flush();
+    
+    console::showCursor();
+}
+
+// ==================== 血量检测失败结局 ====================
+void showGameOverScreen() {
+    console::clear();
+    console::hideCursor();
+    
+    std::cout << "\n\n\n";
+    std::cout << "    ****************************************************\n\n";
+    std::cout << "              G A M E   O V E R\n\n";
+    std::cout << "    ****************************************************\n\n";
+    std::cout << "       Your health has run out...\n";
+    std::cout << "       The challenges of the maze proved too much.\n";
+    std::cout << "       But don't give up - try again!\n\n";
+    std::cout << "    ****************************************************\n\n";
+    std::cout << "\n\n         Press Enter to return to main menu...";
+    std::cout.flush();
+    
+    console::showCursor();
+}
+
+// ==================== 显示血量 ====================
+void displayHealth(int health, int MAZE_HEIGHT) {
+    console::setPos(0, MAZE_HEIGHT + 3);
+    std::cout << "HP: [";
+    console::setColor(3);  // 红色显示血量
+    for (int i = 0; i < 15; i++) {
+        if (i < health) std::cout << "|";
+        else std::cout << " ";
+    }
+    console::setColor(0);
+    std::cout << "] " << health << "/15   ";
+    std::cout.flush();
+}
+
 void startMaze() {
     MazeState state;
     startMaze(state, false);
@@ -518,7 +571,7 @@ void startMaze(MazeState& state, bool useSavedState) {
         "#.#.....#.................................#.....#.......#.#.#",
         "#.#.###.###################################.###.#.#####.#.#.#",
         "#...#.........................................#.........#...#",
-        "#############################################################"
+        "###########################       ###########################"
     };
 
     // 清出中心出生点周围的 3x3 区域，确保玩家出生后可移动
@@ -540,6 +593,7 @@ void startMaze(MazeState& state, bool useSavedState) {
     if (!useSavedState) {
         playerX = 30;
         playerY = 15;
+        state.health = 15;  // 初始10点血量
 
         // 新开游戏时随机放置三个音游入口
         for (int i = 0; i < 3; i++) {
@@ -619,6 +673,9 @@ void startMaze(MazeState& state, bool useSavedState) {
 
     bool nearNote = false;
     drawMazeFrame(state, maze, MAZE_WIDTH, MAZE_HEIGHT, nearNote);
+    
+    // 显示初始血量
+    displayHealth(state.health, MAZE_HEIGHT);
 
     bool inMaze = true;
     const int MOVE_DELAY_MS = 35;
@@ -637,8 +694,26 @@ void startMaze(MazeState& state, bool useSavedState) {
         }
 
         if (nearShooter) {
-            startShooterGame();
-            MusicManager::playBackgroundMusic("music/maze_bg.mp3");
+            MusicManager::pause();  // 暂停迷宫音乐
+            bool passed = startShooterGame();
+            MusicManager::resume();  // 继续播放迷宫音乐
+            
+            // 射击游戏失败则扣血
+            if (!passed) {
+                state.health -= 3;
+                if (state.health <= 0) {
+                    state.health = 0;
+                    MusicManager::stop();  // 停止迷宫音乐，让主菜单播放回主菜单音乐
+                    console::clear();
+                    console::showCursor();
+                    showGameOverScreen();
+                    console::sleep(500);
+                    console::clearInputBuffer();
+                    cin.get();
+                    inMaze = false;
+                    continue;
+                }
+            }
 
             for (int i = 0; i < 3; i++) {
                 do {
@@ -669,8 +744,26 @@ void startMaze(MazeState& state, bool useSavedState) {
         }
 
         if (nearSnake) {
-            startSnakeGame();
-            MusicManager::playBackgroundMusic("music/maze_bg.mp3");
+            MusicManager::pause();  // 暂停迷宫音乐
+            bool passed = startSnakeGame();
+            MusicManager::resume();  // 继续播放迷宫音乐
+            
+            // 贪吃蛇失败则扣血
+            if (!passed) {
+                state.health -= 3;
+                if (state.health <= 0) {
+                    state.health = 0;
+                    MusicManager::stop();  // 停止迷宫音乐，让主菜单播放回主菜单音乐
+                    console::clear();
+                    console::showCursor();
+                    showGameOverScreen();
+                    console::sleep(500);
+                    console::clearInputBuffer();
+                    cin.get();
+                    inMaze = false;
+                    continue;
+                }
+            }
 
             for (int i = 0; i < 3; i++) {
                 do {
@@ -727,8 +820,26 @@ void startMaze(MazeState& state, bool useSavedState) {
         // 音符入口需要按 E 才进入音游
         if (doInteract) {
             console::sleep(200);
-            startMusicGame();
-            MusicManager::playBackgroundMusic("music/maze_bg.mp3");
+            MusicManager::pause();  // 暂停迷宫音乐
+            bool passed = startMusicGame();
+            MusicManager::resume();  // 继续播放迷宫音乐
+            
+            // 音游失败则扣血
+            if (!passed) {
+                state.health -= 3;
+                if (state.health <= 0) {
+                    state.health = 0;
+                    MusicManager::stop();  // 停止迷宫音乐，让主菜单播放回主菜单音乐
+                    console::clear();
+                    console::showCursor();
+                    showGameOverScreen();
+                    console::sleep(500);
+                    console::clearInputBuffer();
+                    cin.get();
+                    inMaze = false;
+                    continue;
+                }
+            }
 
             for (int i = 0; i < 3; i++) {
                 do {
@@ -762,6 +873,19 @@ void startMaze(MazeState& state, bool useSavedState) {
             if (maze[nextY][nextX] != '#') {
                 playerX = nextX;
                 playerY = nextY;
+                
+                // 检测是否到达出口（迷宫底部第30行，空列27-33）
+                if (playerY == 30 && playerX >= 27 && playerX <= 33) {
+                    MusicManager::stop();  // 停止迷宫音乐，让主菜单播放回主菜单音乐
+                    console::clear();
+                    console::showCursor();
+                    showVictoryScreen();
+                    console::sleep(5000);
+                    console::clearInputBuffer();
+                    cin.get();
+                    inMaze = false;
+                    continue;
+                }
             }
         }
 
@@ -774,8 +898,27 @@ void startMaze(MazeState& state, bool useSavedState) {
         // 玩家贴近怪物时进入问答小游戏，结束后怪物重置
         int hitEnemy = findTriggeredEnemy(state);
         if (hitEnemy != -1) {
-            startEnemyQuiz();
-            MusicManager::playBackgroundMusic("music/maze_bg.mp3");
+            MusicManager::pause();  // 暂停迷宫音乐
+            bool passed = startEnemyQuiz();
+            MusicManager::resume();  // 继续播放迷宫音乐
+            
+            // 问答失败则扣血
+            if (!passed) {
+                state.health -= 3;
+                if (state.health <= 0) {
+                    state.health = 0;
+                    MusicManager::stop();  // 停止迷宫音乐，让主菜单播放回主菜单音乐
+                    console::clear();
+                    console::showCursor();
+                    showGameOverScreen();
+                    console::sleep(500);
+                    console::clearInputBuffer();
+                    cin.get();
+                    inMaze = false;
+                    continue;
+                }
+            }
+            
             resetOneEnemy(state, maze, MAZE_WIDTH, MAZE_HEIGHT, hitEnemy);
             console::clearInputBuffer();
         }
@@ -789,6 +932,7 @@ void startMaze(MazeState& state, bool useSavedState) {
         }
 
         drawMazeFrame(state, maze, MAZE_WIDTH, MAZE_HEIGHT, nearNote);
+        displayHealth(state.health, MAZE_HEIGHT);
         console::sleep(MOVE_DELAY_MS);
     }
 

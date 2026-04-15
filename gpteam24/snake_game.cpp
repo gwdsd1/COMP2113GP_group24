@@ -221,7 +221,7 @@ static void fullDraw(const std::deque<SC>& snake, const SC& food,
 }
 
 // ==================== 主入口 ====================
-void startSnakeGame() {
+bool startSnakeGame() {
     using namespace snake_con;
 
     MusicManager::playBackgroundMusic("music/snake_bg.mp3");
@@ -397,4 +397,6 @@ void startSnakeGame() {
     clearInput();
     sleepMs(2000);      // ← 停留2秒后自动返回迷宫，不再等按键
     clearInput();
+    
+    return won;
 }

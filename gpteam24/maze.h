@@ -8,6 +8,7 @@ constexpr int ENEMY_COUNT = 4;
 struct MazeState {
     int playerX;
     int playerY;
+    int health;  // 玩家血量，初始10点
 
     int noteX[3];
     int noteY[3];

@@ -99,7 +99,10 @@ struct ShooterEnemy {
     double hitFlashTimer;
 };
 
-void startShooterGame() {
+// 存储射击游戏结果：true表示通关（分数>=2000）
+static bool shooterGamePassed = false;
+
+bool startShooterGame() {
     // 播放射击游戏背景音乐
     MusicManager::playBackgroundMusic("music/shooter_bg.mp3");
 
@@ -113,6 +116,9 @@ void startShooterGame() {
 #else
     shooter_console::LinuxTermGuard termGuard;
 #endif
+
+    // 重置结果
+    shooterGamePassed = false;
 
     // 1. Transition effect
     shooter_console::clear();
@@ -315,7 +321,15 @@ void startShooterGame() {
 
     // End transition
     shooter_console::clear();
-    cout << "\x1b[96m\n\nYOU FINALLY HANDLED ALL OF THESE......\x1b[0m\n" << flush;
+    
+    // 判断是否通关：分数>=2000视为通关
+    shooterGamePassed = (score >= 2000);
+    
+    if (shooterGamePassed) {
+        cout << "\x1b[92m\n\nCONGRATULATIONS! YOU HANDLED ALL OF THESE! Score: " << score << "\x1b[0m\n" << flush;
+    } else {
+        cout << "\x1b[91m\n\nGAME OVER... Score: " << score << " (Need 2000+ to pass)\x1b[0m\n" << flush;
+    }
     this_thread::sleep_for(chrono::milliseconds(2000));
     
     // Clear buffer again
@@ -325,4 +339,6 @@ void startShooterGame() {
     FlushConsoleInputBuffer(GetStdHandle(STD_INPUT_HANDLE));
 #endif
     shooter_console::clearInputBuffer();
+    
+    return shooterGamePassed;
 }

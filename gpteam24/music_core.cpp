@@ -27,16 +27,16 @@
 
 using namespace std;
 
-// -------------------- ¹Ø¿¨Êý¾Ý --------------------
+// -------------------- ï¿½Ø¿ï¿½ï¿½ï¿½ï¿½ï¿½ --------------------
 struct Stage {
-    std::string id;          // ¹Ø¿¨±àºÅ
-    std::string singer;      // ¸èÊÖ
-    std::string music;       // ÇúÃû
-    std::string chartPath;   // ÇúÆ×ÎÄ¼þÂ·¾¶
-    std::string musicPath;   // ÒôÀÖÎÄ¼þÂ·¾¶
+    std::string id;          // ï¿½Ø¿ï¿½ï¿½ï¿½ï¿½
+    std::string singer;      // ï¿½ï¿½ï¿½ï¿½
+    std::string music;       // ï¿½ï¿½ï¿½ï¿½
+    std::string chartPath;   // ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½Â·ï¿½ï¿½
+    std::string musicPath;   // ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½Â·ï¿½ï¿½
 };
 
-//ÔÚ´ËÌí¼Ó¹Ø¿¨
+//ï¿½Ú´ï¿½ï¿½ï¿½ï¿½Ó¹Ø¿ï¿½
 static const std::vector<Stage> stages = {
     { "1", "Yorushika", "Paddle", "charts/yorushika_paddle.chart", "music/yorushika_paddle.mp3" },
     { "2", "ZUTOMAYO", "Justice", "charts/zutomayo_justice.chart", "music/zutomayo_justice.mp3" },
@@ -44,7 +44,7 @@ static const std::vector<Stage> stages = {
 	{"4","n-buna","because summer will end","charts/n-buna_because_summer_will_end.chart","music/n-buna_because_summer_will_end.mp3"},
 };
 
-// -------------------- ÖÕ¶Ë¹¤¾ß£¨ANSI£© --------------------
+// -------------------- ï¿½Õ¶Ë¹ï¿½ï¿½ß£ï¿½ANSIï¿½ï¿½ --------------------
 namespace term {
     static const char* CSI = "\x1b[";
 
@@ -54,17 +54,17 @@ namespace term {
     void moveHome() { std::cout << CSI << "H"; }
     void resetColor() { std::cout << CSI << "0m"; }
     void moveTo(int r, int c) { std::cout << CSI << r << ";" << c << "H"; }
-    void setBlue() { std::cout << CSI << "34m"; }  // À¶É«
-    void setBrightBlue() { std::cout << CSI << "94m"; }  // ÁÁÀ¶É«
-    void setRed() { std::cout << CSI << "91m"; }  // ÁÁºìÉ«
-    void setYellow() { std::cout << CSI << "93m"; }  // ÁÁ»ÆÉ«
-    void setGreen() { std::cout << CSI << "92m"; }  // ÁÁÂÌÉ«
-    void setBrightCyan() { std::cout << CSI << "96m"; }  // ÁÁÇàÉ«
-    void setNoteStyle() { std::cout << CSI << "1;97;44m"; }  // ¼Ó´Ö°×É«ÎÄ×Ö + À¶É«±³¾°
+    void setBlue() { std::cout << CSI << "34m"; }  // ï¿½ï¿½É«
+    void setBrightBlue() { std::cout << CSI << "94m"; }  // ï¿½ï¿½ï¿½ï¿½É«
+    void setRed() { std::cout << CSI << "91m"; }  // ï¿½ï¿½ï¿½ï¿½É«
+    void setYellow() { std::cout << CSI << "93m"; }  // ï¿½ï¿½ï¿½ï¿½É«
+    void setGreen() { std::cout << CSI << "92m"; }  // ï¿½ï¿½ï¿½ï¿½É«
+    void setBrightCyan() { std::cout << CSI << "96m"; }  // ï¿½ï¿½ï¿½ï¿½É«
+    void setNoteStyle() { std::cout << CSI << "1;97;44m"; }  // ï¿½Ó´Ö°ï¿½É«ï¿½ï¿½ï¿½ï¿½ + ï¿½ï¿½É«ï¿½ï¿½ï¿½ï¿½
 
 #if defined(_WIN32)
     bool enableVT() {
-        // ÆôÓÃ Windows 10+ µÄÐéÄâÖÕ¶Ë´¦Àí£¨ANSI£©
+        // ï¿½ï¿½ï¿½ï¿½ Windows 10+ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õ¶Ë´ï¿½ï¿½ï¿½ï¿½ï¿½ANSIï¿½ï¿½
         HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
         if (hOut == INVALID_HANDLE_VALUE) return false;
         DWORD mode = 0;
@@ -86,12 +86,12 @@ namespace term {
             if (tcgetattr(STDIN_FILENO, &orig) == -1) return;
 
             termios raw = orig;
-            raw.c_lflag &= ~(ICANON | ECHO);  // ·Ç¹æ·¶ + ¹Ø±Õ»ØÏÔ
-            raw.c_cc[VMIN] = 0;              // ·Ç×èÈû
+            raw.c_lflag &= ~(ICANON | ECHO);  // ï¿½Ç¹æ·¶ + ï¿½Ø±Õ»ï¿½ï¿½ï¿½
+            raw.c_cc[VMIN] = 0;              // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
             raw.c_cc[VTIME] = 0;
             if (tcsetattr(STDIN_FILENO, TCSANOW, &raw) == -1) return;
 
-            // Éè stdin ·Ç×èÈû
+            // ï¿½ï¿½ stdin ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
             origFlags = fcntl(STDIN_FILENO, F_GETFL, 0);
             fcntl(STDIN_FILENO, F_SETFL, origFlags | O_NONBLOCK);
             ok = true;
@@ -106,7 +106,7 @@ namespace term {
 #endif
 } // namespace term
 
-// -------------------- ÊäÈë£¨½ö¼ÇÂ¼"°´ÏÂ±ßÑØ"£© --------------------
+// -------------------- ï¿½ï¿½ï¿½ë£¨ï¿½ï¿½ï¿½ï¿½Â¼"ï¿½ï¿½ï¿½Â±ï¿½ï¿½ï¿½"ï¿½ï¿½ --------------------
 struct Input {
     array<bool, 256> justPressed{};
 
@@ -127,7 +127,7 @@ void pollInput(Input& in) {
     while (_kbhit()) {
         int ch = _getch();
         if (ch == 0 || ch == 224) {
-            // À©Õ¹¼ü£¨·½Ïò¼üµÈ£©£¬ÔÙ´Î _getch() ¿ÉÈ¡É¨ÃèÂë£¬ÕâÀïºöÂÔ
+            // ï¿½ï¿½Õ¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È£ï¿½ï¿½ï¿½ï¿½Ù´ï¿½ _getch() ï¿½ï¿½È¡É¨ï¿½ï¿½ï¿½ë£¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
             (void)_getch();
         }
         else {
@@ -146,7 +146,7 @@ void pollInput(Input& in) {
         if (n <= 0) break;
         for (ssize_t i = 0; i < n; ++i) {
             unsigned char c = buf[i];
-            // ÕâÀïºöÂÔ·½Ïò¼üµÄ ESC ÐòÁÐ£¬½ö´¦Àí×ÖÄ¸¼ü
+            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ESC ï¿½ï¿½ï¿½Ð£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¸ï¿½ï¿½
             if (isalpha(c)) c = static_cast<unsigned char>(toupper(c));
             in.pushChar(c);
         }
@@ -154,74 +154,75 @@ void pollInput(Input& in) {
 }
 #endif
 
-// -------------------- ÓÎÏ·Êý¾Ý½á¹¹ --------------------
+// -------------------- ï¿½ï¿½Ï·ï¿½ï¿½ï¿½Ý½á¹¹ --------------------
 struct Note {
     int lane = 0;     // 0..5 -> S D F | J K L
-    double y = 0.0;   // 0 ¶¥²¿£¬ÏòÏÂÔö´ó
-    bool dead = false; // ÃüÖÐ»ò³¬Ê±
+    double y = 0.0;   // 0 ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    bool dead = false; // ï¿½ï¿½ï¿½Ð»ï¿½Ê±
 };
 
-// ÅÐ¶¨·´À¡ÐÅÏ¢
+// ï¿½Ð¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢
 struct JudgeFeedback {
     std::string text = "";
     int lane = -1;
     double timer = 0.0;
-    int color = 0; // 0=ÎÞ, 1=ÂÌÉ«(Perfect), 2=»ÆÉ«(Good), 3=ºìÉ«(Miss)
+    int color = 0; // 0=ï¿½ï¿½, 1=ï¿½ï¿½É«(Perfect), 2=ï¿½ï¿½É«(Good), 3=ï¿½ï¿½É«(Miss)
 };
 
 struct Game {
-    // ÆÁÄ»³ß´ç£¨ÐÐ¡¢ÁÐ£©
+    // ï¿½ï¿½Ä»ï¿½ß´ç£¨ï¿½Ð¡ï¿½ï¿½Ð£ï¿½
     int H = 28;
     int W = 64;
 
-    // 6 ¹ì X ×ø±ê£¨ÁÐ£©
+    // 6 ï¿½ï¿½ X ï¿½ï¿½ï¿½ê£¨ï¿½Ð£ï¿½
     int lanes = 6;
     int laneX[6] = { 10, 18, 26, 38, 46, 54 };
 
-    // ÅÐ¶¨Ïß Y£¨ÐÐ£©
+    // ï¿½Ð¶ï¿½ï¿½ï¿½ Yï¿½ï¿½ï¿½Ð£ï¿½
     int judgeY = 24;
 
-    // ÅÐ¶¨´°¿Ú£¨µ¥Î»£ºÐÐ£©
-    int perfectWindow = 1; // ¡À1 ÐÐ
-    int goodWindow = 2; // ¡À2 ÐÐ
+    // ï¿½Ð¶ï¿½ï¿½ï¿½ï¿½Ú£ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½Ð£ï¿½
+    int perfectWindow = 1; // ï¿½ï¿½1 ï¿½ï¿½
+    int goodWindow = 2; // ï¿½ï¿½2 ï¿½ï¿½
 
-    // ÏÂÂäËÙ¶ÈÓë²úÉúÆµÂÊ
+    // ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æµï¿½ï¿½
     double speedRowsPerSec = 15.0;
     double spawnInterval = 0.6;
     double spawnTimer = 0.0;
 
-    // ·ÖÊý¡¢Á¬»÷¡¢ÉúÃü
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     int score = 0;
     int combo = 0;
     int maxCombo = 0;
     int life = 100;
     
-    // ÅÐ¶¨Í³¼Æ
+    // ï¿½Ð¶ï¿½Í³ï¿½ï¿½
     int perfectCount = 0;
     int goodCount = 0;
     int missCount = 0;
 
     vector<Note> notes;
     
-    // ÅÐ¶¨·´À¡
+    // ï¿½Ð¶ï¿½ï¿½ï¿½ï¿½ï¿½
     JudgeFeedback feedback;
-    array<double, 6> laneHitTimer{}; // °´¼ü¸ßÁÁ¼ÆÊ±Æ÷
+    array<double, 6> laneHitTimer{}; // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½
 
-    // ¼üÎ»Ó³Éä£¨6 ¹ì£©£ºS D F | J K L
+    // ï¿½ï¿½Î»Ó³ï¿½ä£¨6 ï¿½ì£©ï¿½ï¿½S D F | J K L
     array<char, 6> laneKeys = { 'S','D','F','J','K','L' };
     
-    // ÇúÆ×Ä£Ê½
+    // ï¿½ï¿½ï¿½ï¿½Ä£Ê½
     bool useChart = false;
     ChartData chart;
     size_t nextNoteIndex = 0;
-    double gameTime = 0.0;  // ÓÎÏ·Ê±¼ä£¨Ãë£©
+    double gameTime = 0.0;  // ï¿½ï¿½Ï·Ê±ï¿½ä£¨ï¿½ë£©
     
-    // ÇúÆ×½áÊø¼ì²â
-    bool chartFinished = false;    // ËùÓÐÒô·ûÒÑ´¦ÀíÍê±Ï
-    double finishTimer = 0.0;      // ½áÊøºóµÄµ¹¼ÆÊ±£¨Ãë£©
-    static constexpr double FINISH_DELAY = 1.0; // ½áÊøºóµÈ´ý1Ãë
+    // ï¿½ï¿½ï¿½×½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    bool chartFinished = false;    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    double finishTimer = 0.0;      // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Äµï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ë£©
+    static constexpr double FINISH_DELAY = 1.0; // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È´ï¿½1ï¿½ï¿½
+    bool gameOver = false;         // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½Ç·ï¿½ï¿½ï¿½ï¿½
     
-    // ¼ÓÔØÇúÆ×
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     bool loadChart(const std::string& filepath) {
         if (chart.loadFromFile(filepath)) {
             useChart = true;
@@ -229,8 +230,9 @@ struct Game {
             gameTime = 0.0;
             chartFinished = false;
             finishTimer = 0.0;
+            gameOver = false;
             
-            // ¸ù¾ÝBPMµ÷ÕûËÙ¶È
+            // ï¿½ï¿½ï¿½ï¿½BPMï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½
             speedRowsPerSec = 15.0;
             
             return true;
@@ -238,46 +240,46 @@ struct Game {
         return false;
     }
     
-    // ËùÓÐÒô·ûÊÇ·ñÒÑÉú³ÉÇÒÆÁÄ»ÉÏÎÞ´æ»îÒô·û
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä»ï¿½ï¿½ï¿½Þ´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     bool allNotesCleared() const {
         return nextNoteIndex >= chart.notes.size() && notes.empty();
     }
 
-    // ¼ì²éÊÇ·ñÓ¦½áÊøÓÎÏ·
+    // ï¿½ï¿½ï¿½ï¿½Ç·ï¿½Ó¦ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï·
     bool shouldEnd() const {
-        return chartFinished && finishTimer >= FINISH_DELAY;
+        return gameOver || (chartFinished && finishTimer >= FINISH_DELAY);
     }
 
     void update(double dt, const Input& input) {
-        // ¸üÐÂÓÎÏ·Ê±¼ä
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï·Ê±ï¿½ï¿½
         gameTime += dt;
         
-        // Èç¹ûÇúÆ×ÒÑ½áÊø£¬ÀÛ¼Æµ¹¼ÆÊ±
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Û¼Æµï¿½ï¿½ï¿½Ê±
         if (chartFinished) {
             finishTimer += dt;
         }
         
-        // ¸üÐÂÅÐ¶¨·´À¡¼ÆÊ±Æ÷
+        // ï¿½ï¿½ï¿½ï¿½ï¿½Ð¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½
         if (feedback.timer > 0) {
             feedback.timer -= dt;
             if (feedback.timer <= 0) feedback.text = "";
         }
         
-        // ¸üÐÂ¹ìµÀ¸ßÁÁ¼ÆÊ±Æ÷
+        // ï¿½ï¿½ï¿½Â¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½
         for (int i = 0; i < lanes; ++i) {
             if (laneHitTimer[i] > 0) laneHitTimer[i] -= dt;
         }
         
-        // 1) Éú³ÉÒô·û
+        // 1) ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         if (useChart) {
-            // ÇúÆ×Ä£Ê½£º¸ù¾ÝÊ±¼äÉú³ÉÒô·û
-            double spawnAheadTime = (judgeY / speedRowsPerSec); // ÌáÇ°Éú³ÉÊ±¼ä
+            // ï¿½ï¿½ï¿½ï¿½Ä£Ê½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+            double spawnAheadTime = (judgeY / speedRowsPerSec); // ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½
 
             while (nextNoteIndex < chart.notes.size()) {
                 const auto& chartNote = chart.notes[nextNoteIndex];
                 double adjustedTime = chartNote.time + chart.offset;
 
-                // ¼ì²éÊÇ·ñµ½´ïÉú³ÉÊ±¼ä
+                // ï¿½ï¿½ï¿½ï¿½Ç·ñµ½´ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½
                 if (gameTime >= adjustedTime - spawnAheadTime) {
                     Note n;
                     n.lane = chartNote.lane;
@@ -289,26 +291,26 @@ struct Game {
                 }
             }
 
-            // ×¢Òâ£ºÇúÆ×½áÊø¼ì²âÒÑÒÆÖÁÖ÷Ñ­»·£¬½áºÏÒôÀÖ²¥·Å×´Ì¬ÅÐ¶Ï
+            // ×¢ï¿½â£ºï¿½ï¿½ï¿½×½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö²ï¿½ï¿½ï¿½×´Ì¬ï¿½Ð¶ï¿½
         }
 
-        // 2) µôÂä
+        // 2) ï¿½ï¿½ï¿½ï¿½
         for (auto it = notes.begin(); it != notes.end(); ) {
             it->y += speedRowsPerSec * dt;
             ++it;
         }
 
-        // 3) ÅÐ¶¨£¨½ö°´ÏÂ±ßÑØ£©
+        // 3) ï¿½Ð¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â±ï¿½ï¿½Ø£ï¿½
         for (int li = 0; li < lanes; ++li) {
             if (input.pressed(laneKeys[li])) {
-                laneHitTimer[li] = 0.15; // ÉèÖÃ¹ìµÀ¸ßÁÁÊ±³¤
+                laneHitTimer[li] = 0.15; // ï¿½ï¿½ï¿½Ã¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½
                 
                 int bestIdx = -1;
-                int bestDist = 1000000000; // ½« 1e9 ¸ÄÎªÕûÊý×ÖÃæÁ¿£¬±ÜÃâ double µ½ int µÄ×ª»»¾¯¸æ
+                int bestDist = 1000000000; // ï¿½ï¿½ 1e9 ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ double ï¿½ï¿½ int ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
                 for (int i = 0; i < (int)notes.size(); ++i) {
                     auto& n = notes[i];
                     if (n.dead || n.lane != li) continue;
-                    int dist = (int)std::lround(n.y) - judgeY; // Õý=ÒÑ¹ýÏß
+                    int dist = (int)std::lround(n.y) - judgeY; // ï¿½ï¿½=ï¿½Ñ¹ï¿½ï¿½ï¿½
                     int ad = std::abs(dist);
                     if (ad < bestDist) { bestDist = ad; bestIdx = i; }
                 }
@@ -320,7 +322,7 @@ struct Game {
                         score += 10; combo++; maxCombo = std::max(maxCombo, combo);
                         perfectCount++;
                         n.dead = true;
-                        // ÏÔÊ¾ Perfect ·´À¡
+                        // ï¿½ï¿½Ê¾ Perfect ï¿½ï¿½ï¿½ï¿½
                         feedback.text = "PERFECT!";
                         feedback.lane = li;
                         feedback.timer = 0.5;
@@ -330,27 +332,28 @@ struct Game {
                         score += 5;  combo++; maxCombo = std::max(maxCombo, combo);
                         goodCount++;
                         n.dead = true;
-                        // ÏÔÊ¾ Good ·´À¡
+                        // ï¿½ï¿½Ê¾ Good ï¿½ï¿½ï¿½ï¿½
                         feedback.text = "GOOD";
                         feedback.lane = li;
                         feedback.timer = 0.5;
                         feedback.color = 2;
                     }
                     else {
-                        // Æ«Àë¹ý´ó£¬ºöÂÔ±¾´Î»÷´ò£¨²»¿Û·Ö£©
+                        // Æ«ï¿½ï¿½ï¿½ï¿½ó£¬ºï¿½ï¿½Ô±ï¿½ï¿½Î»ï¿½ï¿½ò£¨²ï¿½ï¿½Û·Ö£ï¿½
                     }
                 }
             }
         }
 
-        // 4) ³¬Ê± Miss
+        // 4) ï¿½ï¿½Ê± Miss
         for (auto& n : notes) {
             if (!n.dead && n.y > judgeY + goodWindow + 1) {
                 n.dead = true;
                 combo = 0;
                 missCount++;
                 life = std::max(0, life - 2);
-                // ÏÔÊ¾ Miss ·´À¡
+                if (life <= 0) gameOver = true;
+                // ï¿½ï¿½Ê¾ Miss ï¿½ï¿½ï¿½ï¿½
                 feedback.text = "MISS";
                 feedback.lane = n.lane;
                 feedback.timer = 0.5;
@@ -358,7 +361,7 @@ struct Game {
             }
         }
 
-        // 5) ÇåÀí£¨ÐÞÕýºóµÄ erase-remove£©
+        // 5) ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ erase-removeï¿½ï¿½
         notes.erase(std::remove_if(notes.begin(), notes.end(),
             [this](const Note& n) { return n.dead || n.y > (double)(H - 1); }),
             notes.end());
@@ -367,7 +370,7 @@ struct Game {
     void render() {
         term::moveHome();
 
-        // ¶¥²¿ HUD
+        // ï¿½ï¿½ï¿½ï¿½ HUD
         std::cout << "Console Rhythm 6L  |  ";
         if (useChart) {
             term::setBrightCyan();
@@ -380,7 +383,7 @@ struct Game {
             << "   MaxCombo: " << maxCombo
             << "   Life: " << life << "\n";
         
-        // ÅÐ¶¨Í³¼ÆÐÐ
+        // ï¿½Ð¶ï¿½Í³ï¿½ï¿½ï¿½ï¿½
         term::setGreen();
         std::cout << "Perfect: " << perfectCount;
         term::resetColor();
@@ -393,7 +396,7 @@ struct Game {
         std::cout << "Miss: " << missCount;
         term::resetColor();
         
-        // ÇúÆ×½áÊøµ¹¼ÆÊ±ÌáÊ¾
+        // ï¿½ï¿½ï¿½×½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½Ê¾
         if (chartFinished) {
             std::cout << "    ";
             term::setYellow();
@@ -404,41 +407,41 @@ struct Game {
         }
         std::cout << "\n";
 
-        // »­²¼
+        // ï¿½ï¿½ï¿½ï¿½
         static std::vector<std::string> canvas;
         canvas.assign(H, std::string(W, ' '));
 
-        // ¹ìµÀ£¨´ø¸ßÁÁÐ§¹û£©
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð§ï¿½ï¿½ï¿½ï¿½
         for (int i = 0; i < lanes; ++i) {
             int x = laneX[i];
             for (int y = 1; y < H - 2; ++y) {
                 if (x >= 0 && x < W) {
-                    // Èç¹û¹ìµÀ±»°´ÏÂ£¬Ê¹ÓÃÌØÊâ×Ö·û
+                    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â£ï¿½Ê¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö·ï¿½
                     canvas[y][x] = (laneHitTimer[i] > 0) ? '!' : '|';
                 }
             }
         }
 
-        // ÅÐ¶¨Ïß
+        // ï¿½Ð¶ï¿½ï¿½ï¿½
         if (judgeY >= 0 && judgeY < H) {
             for (int x = 0; x < W; ++x) canvas[judgeY][x] = '-';
         }
 
-        // Òô·û
+        // ï¿½ï¿½ï¿½ï¿½
         for (auto& n : notes) {
             int x = laneX[n.lane];
             int y = (int)std::lround(n.y);
             if (y >= 0 && y < H && x >= 0 && x < W) {
-                canvas[y][x] = '@';  // Ê¹ÓÃ @ ·ûºÅ£¬¸ü¼ÓÐÑÄ¿
+                canvas[y][x] = '@';  // Ê¹ï¿½ï¿½ @ ï¿½ï¿½ï¿½Å£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿
             }
         }
         
-        // ÅÐ¶¨·´À¡ÏÔÊ¾
+        // ï¿½Ð¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¾
         if (feedback.timer > 0 && feedback.lane >= 0 && feedback.lane < lanes) {
             int x = laneX[feedback.lane];
-            int y = judgeY - 3; // ÔÚÅÐ¶¨ÏßÉÏ·½ÏÔÊ¾
+            int y = judgeY - 3; // ï¿½ï¿½ï¿½Ð¶ï¿½ï¿½ï¿½ï¿½Ï·ï¿½ï¿½ï¿½Ê¾
             if (y >= 0 && y < H) {
-                // ÔÚÖÐÐÄÎ»ÖÃÏÔÊ¾ÅÐ¶¨ÎÄ×Ö
+                // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½Ê¾ï¿½Ð¶ï¿½ï¿½ï¿½ï¿½ï¿½
                 int textLen = (int)feedback.text.length();
                 int startX = std::max(0, x - textLen / 2);
                 for (int i = 0; i < textLen && startX + i < W; ++i) {
@@ -447,7 +450,7 @@ struct Game {
             }
         }
 
-        // ¼üÎ»ÌáÊ¾ - ¶ÔÆëµ½Ã¿¸ö¹ìµÀÏÂ·½
+        // ï¿½ï¿½Î»ï¿½ï¿½Ê¾ - ï¿½ï¿½ï¿½ëµ½Ã¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â·ï¿½
         if (H - 2 >= 0 && H - 2 < (int)canvas.size()) {
             for (int i = 0; i < lanes; ++i) {
                 int x = laneX[i];
@@ -457,7 +460,7 @@ struct Game {
             }
         }
         
-        // ÍË³öÌáÊ¾·ÅÔÚ×îºóÒ»ÐÐ
+        // ï¿½Ë³ï¿½ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½
         if (H - 1 >= 0 && H - 1 < (int)canvas.size()) {
             std::string hint = "(Q=quit)";
             int startX = W - (int)hint.size() - 1;
@@ -469,21 +472,21 @@ struct Game {
         }
         
 
-        // Êä³ö
+        // ï¿½ï¿½ï¿½
         for (int y = 0; y < H; ++y) {
             for (int x = 0; x < (int)canvas[y].size(); ++x) {
                 char ch = canvas[y][x];
                 if (ch == '@') {
-                    term::setNoteStyle();  // ÉèÖÃÐÑÄ¿µÄÒô·ûÑùÊ½£¨°××ÖÀ¶µ×£©
+                    term::setNoteStyle();  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×£ï¿½
                     std::cout << ch;
-                    term::resetColor();      // ÖØÖÃÑÕÉ«
+                    term::resetColor();      // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
                 } else if (ch == '!') {
-                    // ¸ßÁÁµÄ¹ìµÀ
+                    // ï¿½ï¿½ï¿½ï¿½ï¿½Ä¹ï¿½ï¿½
                     term::setBrightCyan();
                     std::cout << ch;
                     term::resetColor();
                 } else if (feedback.timer > 0 && y == judgeY - 3) {
-                    // ÅÐ¶¨ÎÄ×ÖÇøÓò£¬¸ù¾ÝÅÐ¶¨ÀàÐÍ×ÅÉ«
+                    // ï¿½Ð¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ò£¬¸ï¿½ï¿½ï¿½ï¿½Ð¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
                     bool isJudgeText = false;
                     if (feedback.lane >= 0 && feedback.lane < lanes) {
                         int textX = laneX[feedback.lane];
@@ -513,7 +516,7 @@ struct Game {
     }
 };
 
-// -------------------- µ¹¼ÆÊ±¹¦ÄÜ --------------------
+// -------------------- ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ --------------------
 void showCountdown() {
     const int countdown[] = {3, 2, 1};
     
@@ -521,11 +524,11 @@ void showCountdown() {
         term::clearScreen();
         term::moveHome();
         
-        // ¼ÆËãÆÁÄ»ÖÐÑëÎ»ÖÃ
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä»ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½
         int centerRow = 14;
         int centerCol = 32;
         
-        // »æÖÆ´óºÅÊý×ÖÐ§¹û
+        // ï¿½ï¿½ï¿½Æ´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð§ï¿½ï¿½
         term::moveTo(centerRow - 2, centerCol - 5);
         term::setYellow();
         std::cout << "+---------+";
@@ -550,7 +553,7 @@ void showCountdown() {
         std::this_thread::sleep_for(std::chrono::milliseconds(800));
     }
     
-    // ÏÔÊ¾ "GO!"
+    // ï¿½ï¿½Ê¾ "GO!"
     term::clearScreen();
     term::moveHome();
     
@@ -579,7 +582,7 @@ void showCountdown() {
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
 }
 
-// -------------------- ÓÎÏ·½áÊø»­Ãæ --------------------
+// -------------------- ï¿½ï¿½Ï·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ --------------------
 void showGameOver(const Game& game) {
     term::clearScreen();
     term::moveHome();
@@ -587,7 +590,7 @@ void showGameOver(const Game& game) {
     int centerRow = 10;
     int centerCol = 32;
     
-    // ÏÔÊ¾ GAME OVER
+    // ï¿½ï¿½Ê¾ GAME OVER
     term::moveTo(centerRow, centerCol - 10);
     term::setRed();
     std::cout << "+--------------------+";
@@ -606,7 +609,7 @@ void showGameOver(const Game& game) {
     term::moveTo(centerRow + 4, centerCol - 10);
     std::cout << "+--------------------+";
     
-    // ÏÔÊ¾×îÖÕÍ³¼Æ
+    // ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½ï¿½Í³ï¿½ï¿½
     term::moveTo(centerRow + 6, centerCol - 10);
     term::setBrightCyan();
     std::cout << "Final Score: " << game.score;
@@ -633,17 +636,17 @@ void showGameOver(const Game& game) {
     term::resetColor();
     std::cout.flush();
     
-    std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+    std::this_thread::sleep_for(std::chrono::milliseconds(5000));
 }
 
-// -------------------- Ö÷³ÌÐò --------------------
-void startMusicGameInternal() {
+// -------------------- ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ --------------------
+int startMusicGameInternal() {
     std::srand((unsigned)std::time(nullptr));
 
 #if defined(_WIN32)
-    term::enableVT(); // ³¢ÊÔÆôÓÃ ANSI
+    term::enableVT(); // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ANSI
 #else
-    term::TermiosGuard tg; // ½øÈë raw Ä£Ê½£¬ÍË³ö×Ô¶¯»Ö¸´
+    term::TermiosGuard tg; // ï¿½ï¿½ï¿½ï¿½ raw Ä£Ê½ï¿½ï¿½ï¿½Ë³ï¿½ï¿½Ô¶ï¿½ï¿½Ö¸ï¿½
 #endif
 
     term::hideCursor();
@@ -651,9 +654,9 @@ void startMusicGameInternal() {
     term::moveHome();
     
     Game game;
-    // Ê¹ÓÃÈ«¾Ö MusicManager£¬²»ÐèÒª¾Ö²¿ musicPlayer
+    // Ê¹ï¿½ï¿½È«ï¿½ï¿½ MusicManagerï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½Ö²ï¿½ musicPlayer
     
-    // -------- ¹Ø¿¨Ä£Ê½ --------
+    // -------- ï¿½Ø¿ï¿½Ä£Ê½ --------
     const Stage* selected = nullptr;
     while (!selected) {
         term::clearScreen();
@@ -687,7 +690,7 @@ void startMusicGameInternal() {
 #if defined(_WIN32)
         while (_kbhit()) _getch();
 #else
-        // ÔÚ Linux ÏÂ¶ªÆúËùÓÐ²ÐÁôµÄ±ê×¼ÊäÈë»º³å£¬ÒÔ·ÀÖ®Ç°µÄ²Ù×÷ÒÅÁôÊäÈë
+        // ï¿½ï¿½ Linux ï¿½Â¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð²ï¿½ï¿½ï¿½ï¿½Ä±ï¿½×¼ï¿½ï¿½ï¿½ë»ºï¿½å£¬ï¿½Ô·ï¿½Ö®Ç°ï¿½Ä²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         {
             int oldf = fcntl(STDIN_FILENO, F_GETFL, 0);
             fcntl(STDIN_FILENO, F_SETFL, oldf | O_NONBLOCK);
@@ -714,7 +717,7 @@ void startMusicGameInternal() {
 
         std::cout << stageInput << "\n" << std::flush;
 
-        // ²éÕÒ¶ÔÓ¦¹Ø¿¨
+        // ï¿½ï¿½ï¿½Ò¶ï¿½Ó¦ï¿½Ø¿ï¿½
         for (const auto& s : stages) {
             if (s.id == stageInput) { selected = &s; break; }
         }
@@ -724,7 +727,7 @@ void startMusicGameInternal() {
             std::cout << "\nLoading stage: " << selected->singer << " - " << selected->music << "\n";
             term::resetColor();
 
-            // ×Ô¶¯¼ÓÔØÇúÆ×
+            // ï¿½Ô¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
             if (!game.loadChart(selected->chartPath)) {
                 term::setRed();
                 std::cout << "? Failed to load chart: " << selected->chartPath << "\n";
@@ -737,7 +740,7 @@ void startMusicGameInternal() {
                 std::cout << "? Chart loaded  (" << game.chart.notes.size() << " notes, BPM " << game.chart.bpm << ")\n";
                 term::resetColor();
 
-                // ×Ô¶¯¼ÓÔØÒôÀÖ£¨Ê¹ÓÃ MusicManager£©
+                // ï¿½Ô¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö£ï¿½Ê¹ï¿½ï¿½ MusicManagerï¿½ï¿½
                 MusicManager::stop();
                 if (MusicManager::getPlayer().load(selected->musicPath)) {
                     term::setGreen();
@@ -763,15 +766,15 @@ void startMusicGameInternal() {
     term::hideCursor();
     term::clearScreen();
 
-    // ÏÔÊ¾µ¹¼ÆÊ±
+    // ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½ï¿½Ê±
     showCountdown();
 
-    // µ¹¼ÆÊ±½áÊøºó¿ªÊ¼²¥·ÅÒôÀÖ
+    // ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     MusicManager::getPlayer().play();
 
     Input input;
 
-    // ¹Ì¶¨Âß¼­²½³¤ 120Hz£¬äÖÈ¾ ~60FPS
+    // ï¿½Ì¶ï¿½ï¿½ß¼ï¿½ï¿½ï¿½ï¿½ï¿½ 120Hzï¿½ï¿½ï¿½ï¿½È¾ ~60FPS
     const double dt = 1.0 / 120.0;
     auto now = []() { return std::chrono::steady_clock::now(); };
     auto prev = now();
@@ -786,7 +789,7 @@ void startMusicGameInternal() {
         acc += frame;
         renderAcc += frame;
 
-        // ÊäÈë£¨·Ç×èÈû£©
+        // ï¿½ï¿½ï¿½ë£¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         Input tempInput;
         pollInput(tempInput);
         for (int i = 0; i < 256; ++i) {
@@ -794,18 +797,17 @@ void startMusicGameInternal() {
         }
         if (input.pressed('Q')) running = false;
 
-        // Âß¼­¶à²½ÅÜÂú
+        // ï¿½ß¼ï¿½ï¿½à²½ï¿½ï¿½ï¿½ï¿½
         while (acc >= dt) {
             game.update(dt, input);
             input.clear();
             acc -= dt;
         }
         
-        // ÇúÆ×Ä£Ê½£ºÒôÀÖ²¥·Å½áÊøºóÔÙµÈ´ý FINISH_DELAY ÍË³ö
+        // æ›²è°±æ¨¡å¼ï¼šéŸ³ç¬¦æ¸…é™¤åŽç­‰å¾… FINISH_DELAY é€€å‡º
         if (game.useChart) {
-            // ÓÐÒôÀÖÊ±ÒÔÒôÀÖ½áÊøÎª×¼£¬ÎÞÒôÀÖÊ±ÒÔÇúÆ×½áÊøÎª×¼
-            bool musicDone = MusicManager::isFinished();
-            if (!game.chartFinished && game.allNotesCleared() && musicDone) {
+            // éŸ³ç¬¦å…¨éƒ¨æ¸…é™¤åŽç­‰å¾…ä¸€å®šæ—¶é—´å°±é€€å‡ºï¼ˆä¸ä¾èµ–éŸ³ä¹æ˜¯å¦æ’­æ”¾å®Œæˆï¼‰
+            if (!game.chartFinished && game.allNotesCleared()) {
                 game.chartFinished = true;
                 game.finishTimer = 0.0;
             }
@@ -814,7 +816,7 @@ void startMusicGameInternal() {
             }
         }
 
-        // äÖÈ¾£¨Ô¼ 60 FPS£©
+        // ï¿½ï¿½È¾ï¿½ï¿½Ô¼ 60 FPSï¿½ï¿½
         if (renderAcc >= (1.0 / 60.0)) {
             game.render();
             renderAcc = 0.0;
@@ -823,14 +825,17 @@ void startMusicGameInternal() {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
-    // Í£Ö¹µ±Ç°ÒôÀÖ£¬·µ»ØÊ±»á×Ô¶¯²¥·Å±³¾°ÒôÀÖ
+    // Í£Ö¹ï¿½ï¿½Ç°ï¿½ï¿½ï¿½Ö£ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½Ô¶ï¿½ï¿½ï¿½ï¿½Å±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     MusicManager::stop();
 
-    // ÏÔÊ¾ÓÎÏ·½áÊø»­Ãæ
+    // ï¿½ï¿½Ê¾ï¿½ï¿½Ï·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     showGameOver(game);
     
     term::resetColor();
     term::showCursor();
     term::clearScreen();
     term::moveHome();
+    
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õ·ï¿½ï¿½ï¿½
+    return game.score;
 }
