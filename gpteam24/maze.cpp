@@ -696,8 +696,8 @@ void startMaze(MazeState& state, bool useSavedState) {
         if (nearShooter) {
             MusicManager::pause();  // 暂停迷宫音乐
             bool passed = startShooterGame();
-            MusicManager::resume();  // 继续播放迷宫音乐
-            
+            MusicManager::playBackgroundMusic("music/maze_bg.mp3");  // 重新播放迷宫音乐
+
             // 射击游戏失败则扣血
             if (!passed) {
                 state.health -= 3;
@@ -746,8 +746,8 @@ void startMaze(MazeState& state, bool useSavedState) {
         if (nearSnake) {
             MusicManager::pause();  // 暂停迷宫音乐
             bool passed = startSnakeGame();
-            MusicManager::resume();  // 继续播放迷宫音乐
-            
+            MusicManager::playBackgroundMusic("music/maze_bg.mp3");  // 重新播放迷宫音乐
+
             // 贪吃蛇失败则扣血
             if (!passed) {
                 state.health -= 3;
@@ -822,8 +822,8 @@ void startMaze(MazeState& state, bool useSavedState) {
             console::sleep(200);
             MusicManager::pause();  // 暂停迷宫音乐
             bool passed = startMusicGame();
-            MusicManager::resume();  // 继续播放迷宫音乐
-            
+            MusicManager::playBackgroundMusic("music/maze_bg.mp3");  // 重新播放迷宫音乐
+
             // 音游失败则扣血
             if (!passed) {
                 state.health -= 3;
