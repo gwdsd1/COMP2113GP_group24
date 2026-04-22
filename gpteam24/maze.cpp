@@ -214,6 +214,13 @@ bool saveMazeStateToFile(const string& filename, const MazeState& state) {
              << state.enemyMinY[i] << ' ' << state.enemyMaxY[i] << ' '
              << state.enemyDir[i] << '\n';
     }
+    fout << state.health << ' ' << state.coins << ' ' << state.wallBreakers << '\n';
+
+    fout << state.brokenWalls.size() << '\n';
+    for (const auto& p : state.brokenWalls) {
+        fout << p.first << ' ' << p.second << '\n';
+    }
+
     return true;
 }
 
@@ -392,13 +399,32 @@ bool loadMazeStateFromFile(const string& filename, MazeState& state) {
         }
     }
 
+    if (!(fin >> state.health >> state.coins >> state.wallBreakers)) {
+        state.health = 15;
+        state.coins = 0;
+        state.wallBreakers = 0;
+    }
+
+    // 读破墙记录
+    int numBroken = 0;
+    state.brokenWalls.clear();
+    if (fin >> numBroken) {
+        for (int i = 0; i < numBroken; i++) {
+            int bx, by;
+            if (fin >> bx >> by) {
+                state.brokenWalls.push_back({ bx, by });
+            }
+        }
+    }
+
     return true;
 }
 
 // 整屏重绘迷宫
 void drawMazeFrame(const MazeState& state, const string maze[], int W, int H, bool nearNote) {
     console::setPos(0, 0);
-    cout << "Use W/A/S/D to move. Press Q to quit maze.";
+    cout << "Use W/A/S/D to move. Press Q to quit maze. P:Shop. Press O to quit shop.";
+    if (state.wallBreakers > 0) cout << " Press B to BreakWall";
     if (nearNote) cout << "  Press E to interact.";
     else cout << "                        ";
     cout << "\n\n";
@@ -515,17 +541,159 @@ void showGameOverScreen() {
 }
 
 // ==================== 显示血量 ====================
-void displayHealth(int health, int MAZE_HEIGHT) {
+void displayHealth(const MazeState& state, int MAZE_HEIGHT) {
     console::setPos(0, MAZE_HEIGHT + 3);
-    std::cout << "HP: [";
-    console::setColor(3);  // 红色显示血量
+    cout << "HP: [";
+    console::setColor(3);
     for (int i = 0; i < 15; i++) {
-        if (i < health) std::cout << "|";
-        else std::cout << " ";
+        if (i < state.health) cout << "|";
+        else cout << " ";
     }
     console::setColor(0);
-    std::cout << "] " << health << "/15   ";
-    std::cout.flush();
+    cout << "] " << state.health << "/15";
+
+    console::setColor(2);
+    cout << "   Coins: " << state.coins;
+    console::setColor(0);
+
+    if (state.wallBreakers > 0) {
+        console::setColor(4);
+        cout << "   Breakers: " << state.wallBreakers;
+        console::setColor(0);
+    }
+    cout << "          ";   // 清除残留字符
+    cout.flush();
+}
+
+static char waitForKeyRaw() {
+    console::clearInputBuffer();
+    while (true) {
+#if defined(_WIN32)
+        if (_kbhit()) {
+            int ch = _getch();
+            if (ch == 0 || ch == 224) { _getch(); continue; }
+            return (char)std::toupper((unsigned char)ch);
+        }
+#else
+        char buf[16];
+        ssize_t n = read(STDIN_FILENO, buf, sizeof(buf));
+        if (n > 0) {
+            for (ssize_t i = 0; i < n; i++) {
+                if (buf[i] == '\x1b') { i += 2; continue; }
+                unsigned char uc = (unsigned char)buf[i];
+                if (uc >= ' ' && uc < 127)
+                    return (char)std::toupper(uc);
+            }
+        }
+#endif
+        console::sleep(30);
+    }
+}
+
+void showShop(MazeState& state) {
+    bool inShop = true;
+    while (inShop) {
+        console::clear();
+        cout << "\n";
+        cout << "  ================================\n";
+        cout << "           S H O P\n";
+        cout << "  ================================\n\n";
+        cout << "  Coins: " << state.coins
+            << "    HP: " << state.health << "/15"
+            << "    Breakers: " << state.wallBreakers << "\n\n";
+        cout << "  [1] Heal Potion  - 1 Coin\n";
+        cout << "      Restore 1 HP\n\n";
+        cout << "  [2] Wall Breaker - 5 Coins\n";
+        cout << "      Break one wall (press B in maze)\n\n";
+        cout << "  [O] Exit Shop\n";
+        cout << "  ================================\n\n";
+        cout << "  Choose: ";
+        cout.flush();
+
+        char ch = waitForKeyRaw();
+
+        if (ch == '1') {
+            if (state.coins < 1) {
+                cout << "Not enough coins!";
+            }
+            else if (state.health >= 15) {
+                cout << "HP is already full!";
+            }
+            else {
+                state.coins--;
+                state.health++;
+                cout << "Purchased! HP -> " << state.health;
+            }
+            cout.flush();
+            console::sleep(800);
+        }
+        else if (ch == '2') {
+            if (state.coins < 5) {
+                cout << "Not enough coins!";
+            }
+            else {
+                state.coins -= 5;
+                state.wallBreakers++;
+                cout << "Purchased! Breakers -> " << state.wallBreakers;
+            }
+            cout.flush();
+            console::sleep(800);
+        }
+        else if (ch == 'O') {
+            inShop = false;
+        }
+    }
+}
+
+bool handleWallBreaker(MazeState& state, string maze[], int W, int H) {
+    console::setPos(0, H + 5);
+    cout << "Break wall: W/A/S/D to pick direction, other key to cancel   ";
+    cout.flush();
+
+    char dir = waitForKeyRaw();
+
+    int tx = state.playerX, ty = state.playerY;
+    if (dir == 'W') ty--;
+    else if (dir == 'S') ty++;
+    else if (dir == 'A') tx--;
+    else if (dir == 'D') tx++;
+    else {
+        console::setPos(0, H + 5);
+        cout << "Cancelled.                                                   ";
+        cout.flush(); console::sleep(500);
+        console::setPos(0, H + 5);
+        cout << "                                                              ";
+        return false;
+    }
+
+    // 不能打最外一圈
+    if (tx <= 0 || tx >= W - 1 || ty <= 0 || ty >= H - 1) {
+        console::setPos(0, H + 5);
+        cout << "Cannot break border walls!                                    ";
+        cout.flush(); console::sleep(800);
+        console::setPos(0, H + 5);
+        cout << "                                                              ";
+        return false;
+    }
+
+    if (maze[ty][tx] != '#') {
+        console::setPos(0, H + 5);
+        cout << "That's not a wall!                                            ";
+        cout.flush(); console::sleep(800);
+        console::setPos(0, H + 5);
+        cout << "                                                              ";
+        return false;
+    }
+
+    maze[ty][tx] = '.';
+    state.wallBreakers--;
+    state.brokenWalls.push_back({ tx, ty });
+    console::setPos(0, H + 5);
+    cout << "Wall broken!                                                  ";
+    cout.flush(); console::sleep(500);
+    console::setPos(0, H + 5);
+    cout << "                                                              ";
+    return true;
 }
 
 void startMaze() {
@@ -578,6 +746,15 @@ void startMaze(MazeState& state, bool useSavedState) {
     for (int dy = -1; dy <= 1; dy++) {
         for (int dx = -1; dx <= 1; dx++) {
             maze[15 + dy][30 + dx] = '.';
+        }
+    }
+
+    // 把存档中记录的碎墙重新应用到迷宫数组上
+    for (const auto& p : state.brokenWalls) {
+        int bx = p.first;
+        int by = p.second;
+        if (bx > 0 && bx < MAZE_WIDTH - 1 && by > 0 && by < MAZE_HEIGHT - 1) {
+            maze[by][bx] = '.';
         }
     }
 
@@ -675,7 +852,7 @@ void startMaze(MazeState& state, bool useSavedState) {
     drawMazeFrame(state, maze, MAZE_WIDTH, MAZE_HEIGHT, nearNote);
     
     // 显示初始血量
-    displayHealth(state.health, MAZE_HEIGHT);
+    displayHealth(state, MAZE_HEIGHT);
 
     bool inMaze = true;
     const int MOVE_DELAY_MS = 35;
@@ -698,7 +875,11 @@ void startMaze(MazeState& state, bool useSavedState) {
             bool passed = startShooterGame();
             MusicManager::playBackgroundMusic("music/maze_bg.mp3");  // 重新播放迷宫音乐
 
-            // 射击游戏失败则扣血
+			// 射击游戏失败则扣血，成功则加金币
+            if (passed) {
+                state.coins++;
+            }
+
             if (!passed) {
                 state.health -= 3;
                 if (state.health <= 0) {
@@ -748,7 +929,11 @@ void startMaze(MazeState& state, bool useSavedState) {
             bool passed = startSnakeGame();
             MusicManager::playBackgroundMusic("music/maze_bg.mp3");  // 重新播放迷宫音乐
 
-            // 贪吃蛇失败则扣血
+			// 贪吃蛇失败则扣血，成功则加金币
+            if (passed) {
+                state.coins++;
+            }
+
             if (!passed) {
                 state.health -= 3;
                 if (state.health <= 0) {
@@ -798,6 +983,8 @@ void startMaze(MazeState& state, bool useSavedState) {
         bool tryMove = false;
         bool doInteract = false;
         bool doQuit = false;
+        bool doShop = false;
+        bool doBreak = false;
 
 #if defined(_WIN32)
         if (GetAsyncKeyState('W') & 0x8000) { nextY--; tryMove = true; }
@@ -806,6 +993,8 @@ void startMaze(MazeState& state, bool useSavedState) {
         else if (GetAsyncKeyState('D') & 0x8000) { nextX++; tryMove = true; }
         else if (nearNote && (GetAsyncKeyState('E') & 0x8000)) { doInteract = true; }
         else if (GetAsyncKeyState('Q') & 0x8000) { doQuit = true; }
+        else if (GetAsyncKeyState('P') & 0x8000) { doShop = true; }
+        else if (state.wallBreakers > 0 && (GetAsyncKeyState('B') & 0x8000)) { doBreak = true; }
         console::clearInputBuffer();
 #else
         char inKey = console::getInput();
@@ -815,7 +1004,29 @@ void startMaze(MazeState& state, bool useSavedState) {
         else if (inKey == 'D') { nextX++; tryMove = true; }
         else if (nearNote && inKey == 'E') { doInteract = true; }
         else if (inKey == 'Q') { doQuit = true; }
+        else if (inKey == 'P') { doShop = true; }
+        else if (inKey == 'B' && state.wallBreakers > 0) { doBreak = true; }
 #endif
+
+        // 商店
+        if (doShop) {
+            showShop(state);
+            console::clear();
+            console::hideCursor();
+            drawMazeFrame(state, maze, MAZE_WIDTH, MAZE_HEIGHT, nearNote);
+            displayHealth(state, MAZE_HEIGHT);
+            console::clearInputBuffer();
+            continue;
+        }
+
+        // 使用破墙道具
+        if (doBreak) {
+            handleWallBreaker(state, maze, MAZE_WIDTH, MAZE_HEIGHT);
+            drawMazeFrame(state, maze, MAZE_WIDTH, MAZE_HEIGHT, nearNote);
+            displayHealth(state, MAZE_HEIGHT);
+            console::clearInputBuffer();
+            continue;
+        }
 
         // 音符入口需要按 E 才进入音游
         if (doInteract) {
@@ -824,7 +1035,11 @@ void startMaze(MazeState& state, bool useSavedState) {
             bool passed = startMusicGame();
             MusicManager::playBackgroundMusic("music/maze_bg.mp3");  // 重新播放迷宫音乐
 
-            // 音游失败则扣血
+			// 音游失败则扣血，成功则加金币
+            if (passed) {
+                state.coins++;
+            }
+
             if (!passed) {
                 state.health -= 3;
                 if (state.health <= 0) {
@@ -902,7 +1117,10 @@ void startMaze(MazeState& state, bool useSavedState) {
             bool passed = startEnemyQuiz();
             MusicManager::resume();  // 继续播放迷宫音乐
             
-            // 问答失败则扣血
+			// 问答失败则扣血,反之加金币
+            if (passed) {
+                state.coins++;
+            }
             if (!passed) {
                 state.health -= 3;
                 if (state.health <= 0) {
@@ -932,7 +1150,7 @@ void startMaze(MazeState& state, bool useSavedState) {
         }
 
         drawMazeFrame(state, maze, MAZE_WIDTH, MAZE_HEIGHT, nearNote);
-        displayHealth(state.health, MAZE_HEIGHT);
+        displayHealth(state, MAZE_HEIGHT);
         console::sleep(MOVE_DELAY_MS);
     }
 
