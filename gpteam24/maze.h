@@ -2,13 +2,14 @@
 #define MAZE_H
 #include <string>
 #include <vector>
+#include <utility>
 
 constexpr int ENEMY_COUNT = 4;
 
 struct MazeState {
     int playerX;
     int playerY;
-    int health;  // 玩家血量，初始10点
+    int health;  // 玩家血量，初始15点
 
     int noteX[3];
     int noteY[3];
@@ -28,6 +29,10 @@ struct MazeState {
     int enemyMaxY[ENEMY_COUNT];
 
     int enemyDir[ENEMY_COUNT];
+
+    int coins = 0;  // 玩家收集的金币数量
+	int wallBreakers = 0;  // 玩家收集的破墙工具数量
+    std::vector<std::pair<int, int>> brokenWalls;  // 记录所有被打碎的墙坐标
 };
 
 void startMaze();
