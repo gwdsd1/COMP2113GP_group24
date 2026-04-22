@@ -230,6 +230,53 @@ bool startSnakeGame() {
     TermGuard tg;
 #endif
 
+    // ==================== 文字介绍过渡 ====================
+    clear();
+    clearInput();
+
+    // 模拟 Moodle 提交成功页面
+    std::cout << "\x1b[92m";
+    std::cout << "\n\n";
+    std::cout << "  Your assignment submission for\n";
+    std::cout << "  'COMP2113 Assignment 2113 (Due: Today, 11:59pm, HKT)'\n";
+    std::cout << "  has been submitted.\n";
+    flush();
+    sleepMs(2500);
+
+    std::cout << "\x1b[0m";
+    std::cout << "\n  You can view your submission and check its status\n";
+    std::cout << "  on the assignment page.\n";
+    flush();
+    sleepMs(2500);
+
+    std::cout << "\n  Your submission contains:\n";
+    std::cout << "  File submissions\n";
+    flush();
+    sleepMs(2000);
+
+    std::cout << "\x1b[93m";
+    std::cout << "\n\n  Time for a little break~\n";
+    std::cout << "\x1b[0m";
+    flush();
+    sleepMs(2500);
+
+    // 倒计时
+    for (int i = 3; i >= 1; --i) {
+        clear();
+        std::cout << "\x1b[93m\n\n\n\t\t\t" << i << "\x1b[0m\n";
+        flush();
+        sleepMs(1000);
+    }
+    clear();
+    std::cout << "\x1b[92m\n\n\n\t\t\tGO!\x1b[0m\n";
+    flush();
+    sleepMs(500);
+
+    clearInput();
+#if defined(_WIN32)
+    FlushConsoleInputBuffer(GetStdHandle(STD_INPUT_HANDLE));
+#endif
+
     srand((unsigned)time(nullptr));
 
     std::deque<SC> snake;
