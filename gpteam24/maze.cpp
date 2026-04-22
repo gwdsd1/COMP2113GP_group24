@@ -605,7 +605,7 @@ void showShop(MazeState& state) {
         cout << "      Restore 1 HP\n\n";
         cout << "  [2] Wall Breaker - 5 Coins\n";
         cout << "      Break one wall (press B in maze)\n\n";
-        cout << "  [O] Exit Shop\n";
+        cout << "  [K] Exit Shop\n";
         cout << "  ================================\n\n";
         cout << "  Choose: ";
         cout.flush();
@@ -639,7 +639,7 @@ void showShop(MazeState& state) {
             cout.flush();
             console::sleep(800);
         }
-        else if (ch == 'O') {
+        else if (ch == 'K') {
             inShop = false;
         }
     }
