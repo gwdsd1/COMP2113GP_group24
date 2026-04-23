@@ -1,4 +1,6 @@
 #pragma once
 
-// 返回true表示通关，false表示失败
+// What it does: Starts the shooter mini-game and returns whether the player passed.
+// Inputs: None.
+// Outputs: Returns true on pass, false on failure.
 bool startShooterGame();
