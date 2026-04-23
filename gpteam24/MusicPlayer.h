@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 
-// 包含 miniaudio 头文件（确保在某个 .cpp 中定义了 MINIAUDIO_IMPLEMENTATION）
+// Include miniaudio header (MINIAUDIO_IMPLEMENTATION must be defined in one .cpp file).
 #include "miniaudio.h"
 
 class MusicPlayer {
@@ -9,13 +9,19 @@ private:
     ma_engine engine;
     ma_sound sound;
     bool loaded;
-    bool isPlayingState;  // 记录播放状态
+    bool isPlayingState;  // Tracks current playing state.
 
 public:
+    // What it does: Constructs the player and initializes the miniaudio engine.
+    // Inputs: None.
+    // Outputs: Constructs a ready-to-use MusicPlayer instance.
     MusicPlayer() : loaded(false), isPlayingState(false) {
         ma_engine_init(NULL, &engine);
     }
 
+    // What it does: Stops playback and releases audio resources.
+    // Inputs: None.
+    // Outputs: Destroys the instance and uninitializes miniaudio objects.
     ~MusicPlayer() {
         stop();
         if (loaded)
@@ -23,19 +29,22 @@ public:
         ma_engine_uninit(&engine);
     }
 
+    // What it does: Loads an audio file into the internal sound object.
+    // Inputs: filepath is the audio file path.
+    // Outputs: Returns true if loading succeeds, otherwise false.
     bool load(const std::string& filepath) {
-        stop(); // 停止之前播放
+        stop(); // Stop previously playing audio.
         if (loaded)
             ma_sound_uninit(&sound);
 
-        // 使用 MA_SOUND_FLAG_DECODE 以便获取准确的播放时间
+        // Use decode flag so playback time can be read accurately.
         if (ma_sound_init_from_file(&engine, filepath.c_str(),
             MA_SOUND_FLAG_DECODE, NULL, NULL, &sound) != MA_SUCCESS) {
             loaded = false;
             return false;
         }
 
-        // 设置循环播放（背景音乐）
+        // Enable looping for background music behavior.
         ma_sound_set_looping(&sound, MA_TRUE);
 
         loaded = true;
@@ -43,6 +52,9 @@ public:
         return true;
     }
 
+    // What it does: Starts playback of the loaded audio.
+    // Inputs: None.
+    // Outputs: Returns true on successful start, otherwise false.
     bool play() {
         if (!loaded) return false;
 
@@ -55,6 +67,9 @@ public:
         return true;
     }
 
+    // What it does: Pauses current playback without unloading audio.
+    // Inputs: None.
+    // Outputs: None.
     void pause() {
         if (loaded && isPlayingState) {
             ma_sound_stop(&sound);
@@ -62,6 +77,9 @@ public:
         }
     }
 
+    // What it does: Stops playback and rewinds to the beginning.
+    // Inputs: None.
+    // Outputs: None.
     void stop() {
         if (loaded) {
             ma_sound_stop(&sound);
@@ -70,27 +88,40 @@ public:
         }
     }
 
+    // What it does: Sets playback volume.
+    // Inputs: volume in the range 0-1000.
+    // Outputs: None.
     void setVolume(int volume) {
-        // volume: 0-1000 映射到 0.0 - 1.0 (保持与原 MCI 版本一致)
+        // volume: 0-1000 mapped to 0.0-1.0.
         if (loaded) ma_sound_set_volume(&sound, volume / 1000.0f);
     }
 
+    // What it does: Reports whether audio is currently playing.
+    // Inputs: None.
+    // Outputs: Returns true if loaded and playing, otherwise false.
     bool getIsPlaying() const {
         return loaded && isPlayingState;
     }
 
+    // What it does: Gets the current playback position in milliseconds.
+    // Inputs: None.
+    // Outputs: Returns playback position in milliseconds, or 0 if no audio is loaded.
     long getPosition() {
         if (!loaded) return 0;
         return (long)ma_sound_get_time_in_milliseconds(&sound);
     }
 
+    // What it does: Reports whether playback is finished according to this project's logic.
+    // Inputs: None.
+    // Outputs: Returns true when not playing, otherwise false.
     bool isFinished() {
-        // 因为设置了循环播放，所以背景音乐永远不会自动结束
-        // 只有当用户切换页面（调用stop）时才会停止
+        // Looping is enabled for background music, so it does not end automatically.
+        // Playback stops only when stop() or pause() is called.
         return !isPlayingState;
     }
 
-    // 禁止拷贝（避免多个对象共享同一个音频引擎）
+    // Disable copy to avoid sharing one audio engine between multiple objects.
     MusicPlayer(const MusicPlayer&) = delete;
     MusicPlayer& operator=(const MusicPlayer&) = delete;
 };
+
