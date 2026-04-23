@@ -18,8 +18,11 @@
 
 using namespace std;
 
-// --- Cross Platform Console Helpers (from maze.cpp style) ---
+// Cross-platform console helpers used by the shooter mini-game.
 namespace shooter_console {
+    // What it does: Clears the terminal screen.
+    // Inputs: None.
+    // Outputs: None.
     inline void clear() {
         #if defined(_WIN32)
         system("cls");
@@ -28,6 +31,9 @@ namespace shooter_console {
         #endif
     }
 
+    // What it does: Reads latest keyboard input and normalizes to uppercase movement keys.
+    // Inputs: None.
+    // Outputs: Returns the latest detected key character, or 0 when no input is available.
     inline char getInput() {
         char lastChar = 0;
         #if defined(_WIN32)
@@ -46,10 +52,10 @@ namespace shooter_console {
                     else if (buf[i+2] == 'B') lastChar = 'S';
                     else if (buf[i+2] == 'C') lastChar = 'D';
                     else if (buf[i+2] == 'D') lastChar = 'A';
-                    i += 2; // skip the parsed sequence
+                    i += 2;
                 }
-                else if (isalpha(buf[i])) { 
-                    lastChar = (char)std::toupper(buf[i]); 
+                else if (isalpha(buf[i])) {
+                    lastChar = (char)std::toupper(buf[i]);
                 }
             }
         }
@@ -57,6 +63,9 @@ namespace shooter_console {
         return lastChar;
     }
 
+    // What it does: Drains pending keyboard input.
+    // Inputs: None.
+    // Outputs: None.
     inline void clearInputBuffer() {
         getInput();
     }
@@ -66,6 +75,10 @@ namespace shooter_console {
         termios orig;
         bool active = false;
         int origFlags = 0;
+
+        // What it does: Enables non-canonical non-blocking terminal mode for smooth game input.
+        // Inputs: None.
+        // Outputs: Constructs guard with raw terminal mode enabled when possible.
         LinuxTermGuard() {
             if (!isatty(STDIN_FILENO)) return;
             tcgetattr(STDIN_FILENO, &orig);
@@ -78,6 +91,10 @@ namespace shooter_console {
             fcntl(STDIN_FILENO, F_SETFL, origFlags | O_NONBLOCK);
             active = true;
         }
+
+        // What it does: Restores original terminal attributes and flags.
+        // Inputs: None.
+        // Outputs: None.
         ~LinuxTermGuard() {
             if (active) {
                 tcsetattr(STDIN_FILENO, TCSANOW, &orig);
@@ -88,7 +105,7 @@ namespace shooter_console {
 #endif
 }
 
-// structure for enemies
+// Represents one falling text enemy in the shooter mini-game.
 struct ShooterEnemy {
     double x;
     double y;
@@ -99,17 +116,20 @@ struct ShooterEnemy {
     double hitFlashTimer;
 };
 
-// 存储射击游戏结果：true表示通关（分数>=2000）
+// Stores shooter game result: true means pass (score >= 1500).
 static bool shooterGamePassed = false;
 
+// What it does: Runs the shooter mini-game loop and evaluates pass/fail by score.
+// Inputs: None.
+// Outputs: Returns true if final score is at least 1500, otherwise false.
 bool startShooterGame() {
-    // 播放射击游戏背景音乐
+    // Play shooter mini-game background music.
     MusicManager::playBackgroundMusic("music/shooter_bg.mp3");
 
 #if defined(_WIN32)
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-    
-    // Enable VT for ANSI
+
+    // Enable ANSI VT sequences on Windows console.
     DWORD mode = 0;
     GetConsoleMode(hConsole, &mode);
     SetConsoleMode(hConsole, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
@@ -117,21 +137,21 @@ bool startShooterGame() {
     shooter_console::LinuxTermGuard termGuard;
 #endif
 
-    // 重置结果
+    // Reset result.
     shooterGamePassed = false;
 
-    // 1. Transition effect
+    // Transition effect.
     shooter_console::clear();
-    cout << "\x1b[91m"; // Bright Red
+    cout << "\x1b[91m";
     cout << "\n\nYOU SUDDENLY FEEL A HUGE SHOCK ...THAT IS......\n";
     this_thread::sleep_for(chrono::milliseconds(2000));
     cout << "ASSIGNMENTS......TUTORIALS......GROUP PROJECTS......PRESENTATIONS......MIDTERMS......FINALS......\n";
     this_thread::sleep_for(chrono::milliseconds(2000));
     cout << "YOU KNOW YOU HAVE TO FACE ALL OF THESE......\n";
     this_thread::sleep_for(chrono::milliseconds(2000));
-    cout << "\x1b[0m"; // Reset
+    cout << "\x1b[0m";
 
-    // 2. Countdown
+    // Countdown.
     for (int i = 3; i >= 1; i--) {
         shooter_console::clear();
         cout << "\x1b[93m\n\n\n\t\t\t" << i << "\x1b[0m\n";
@@ -141,13 +161,11 @@ bool startShooterGame() {
     cout << "\x1b[92m\n\n\n\t\t\tGO!\x1b[0m\n";
     this_thread::sleep_for(chrono::milliseconds(500));
 
-    // Clear buffer
     shooter_console::clearInputBuffer();
 #if defined(_WIN32)
     FlushConsoleInputBuffer(GetStdHandle(STD_INPUT_HANDLE));
 #endif
 
-    // 3. Game settings
     const int W = 64;
     const int H = 24;
     double playerX = W / 2.0;
@@ -164,12 +182,10 @@ bool startShooterGame() {
     double lastDt = 0.016;
 
 #if !defined(_WIN32)
-    // Linux continuous movement simulation vars
     static char linuxLastDir = 0;
     static int linuxDirKeepAlive = 0;
 #endif
-    
-    // Hide cursor
+
     cout << "\x1b[?25l";
 
     while (running) {
@@ -181,20 +197,19 @@ bool startShooterGame() {
             running = false;
         }
 
-        // Input
 #if defined(_WIN32)
         if (GetAsyncKeyState('A') & 0x8000) { playerX -= 60.0 * lastDt; }
         if (GetAsyncKeyState('D') & 0x8000) { playerX += 60.0 * lastDt; }
         if (GetAsyncKeyState('W') & 0x8000) { playerY -= 50.0 * lastDt; }
         if (GetAsyncKeyState('S') & 0x8000) { playerY += 50.0 * lastDt; }
-        shooter_console::clearInputBuffer(); // Prevent accumulated keys from echoing after game ends
+        shooter_console::clearInputBuffer();
 #else
         char inKey = shooter_console::getInput();
         if (inKey == 'W' || inKey == 'A' || inKey == 'S' || inKey == 'D') {
             linuxLastDir = inKey;
-            linuxDirKeepAlive = 15; // slightly reduced momentum for snappier direction change
+            linuxDirKeepAlive = 15;
         } else if (inKey != 0) {
-            linuxLastDir = 0;      
+            linuxLastDir = 0;
         }
 
         if (linuxDirKeepAlive > 0 && linuxLastDir != 0) {
@@ -205,13 +220,12 @@ bool startShooterGame() {
             linuxDirKeepAlive--;
         }
 #endif
-        
+
         if (playerX < 0) playerX = 0;
         if (playerX >= W) playerX = W - 1;
-        if (playerY < H/2) playerY = H/2; 
+        if (playerY < H/2) playerY = H/2;
         if (playerY >= H) playerY = H - 1;
 
-        // Spawn logic
         spawnTimer -= lastDt;
         if (spawnTimer <= 0) {
             ShooterEnemy e;
@@ -219,39 +233,35 @@ bool startShooterGame() {
             e.text = enemyTypes[typeIdx];
             e.x = rand() % (W - e.text.length() - 1);
             e.y = 0;
-            e.maxHp = e.hp = 8 + rand() % 5; // Approx 5 hits (since laser does 2 per frame hit, 10 HP = 5 hits)
+            e.maxHp = e.hp = 8 + rand() % 5;
             e.active = true;
             e.hitFlashTimer = 0.0;
             enemies.push_back(e);
-            spawnTimer = 0.3 + (rand() % 40) / 100.0; // Faster spawn 0.3s - 0.7s
+            spawnTimer = 0.3 + (rand() % 40) / 100.0;
         }
 
         int pxi = (int)playerX;
         int pyi = (int)playerY;
 
-        // Calculate max laser length based on 2-second growth time
         int maxLaserLen = pyi;
         double growthFactor = min(1.0, elapsedSeconds / 2.0);
         int currentLaserLen = (int)(maxLaserLen * growthFactor);
         int laserTopY = pyi - currentLaserLen;
 
-        // Update enemies & collision
         for (auto& e : enemies) {
             if (e.active) {
-                e.y += 4.0 * lastDt; // Much slower drop speed
-                if (e.y > H) e.active = false; 
+                e.y += 4.0 * lastDt;
+                if (e.y > H) e.active = false;
 
                 if (e.hitFlashTimer > 0) {
                     e.hitFlashTimer -= lastDt;
                 }
 
-                // hit scan logic (wide laser / wide hitbox)
                 int ex = (int)e.x;
                 int len = e.text.length();
-                // Player's laser at 'pxi', hit if player is under and within expanded bounds AND the laser reached the enemy
                 if (pxi >= ex - 1 && pxi <= ex + len && pyi > e.y && e.y >= laserTopY) {
-                    e.hp -= 2; 
-                    e.hitFlashTimer = 0.1; // Flash yellow for 100ms
+                    e.hp -= 2;
+                    e.hitFlashTimer = 0.1;
                     if (e.hp <= 0) {
                         e.active = false;
                         score += 50;
@@ -260,23 +270,19 @@ bool startShooterGame() {
             }
         }
 
-        // Render buffer
         vector<string> buffer(H, string(W, ' '));
-        vector<vector<int>> colorBuffer(H, vector<int>(W, 0)); // 0=default, 1=red, 2=blue, 3=yellow
+        vector<vector<int>> colorBuffer(H, vector<int>(W, 0));
 
-        // Player
         if (pyi >= 0 && pyi < H && pxi >= 0 && pxi < W) {
-            buffer[pyi][pxi] = '^'; // player char (blue)
-            colorBuffer[pyi][pxi] = 2; // blue
+            buffer[pyi][pxi] = '^';
+            colorBuffer[pyi][pxi] = 2;
         }
 
-        // Laser
         for (int y = pyi - 1; y >= laserTopY && y >= 0; y--) {
             buffer[y][pxi] = '|';
-            colorBuffer[y][pxi] = 2; // blue
+            colorBuffer[y][pxi] = 2;
         }
 
-        // Apply enemies to buffer
         for (auto& e : enemies) {
             if (e.active) {
                 int ey = (int)e.y;
@@ -284,23 +290,22 @@ bool startShooterGame() {
                 if (ey >= 0 && ey < H) {
                     for (size_t i=0; i<e.text.length() && ex+i < W; i++) {
                         buffer[ey][ex+i] = e.text[i];
-                        colorBuffer[ey][ex+i] = (e.hitFlashTimer > 0) ? 3 : 1; // 3=yellow, 1=red
+                        colorBuffer[ey][ex+i] = (e.hitFlashTimer > 0) ? 3 : 1;
                     }
                 }
             }
         }
 
-        // Output logic (ANSI)
-        string frameOut = "\x1b[H"; // Move home
+        string frameOut = "\x1b[H";
         int lastColor = 0;
         for (int y = 0; y < H; y++) {
             for (int x = 0; x < W; x++) {
                 int col = colorBuffer[y][x];
                 if (col != lastColor) {
-                    if (col == 0) frameOut += "\x1b[0m"; // Reset
-                    else if (col == 1) frameOut += "\x1b[91m"; // Red
-                    else if (col == 2) frameOut += "\x1b[94m"; // Blue
-                    else if (col == 3) frameOut += "\x1b[93m"; // Yellow
+                    if (col == 0) frameOut += "\x1b[0m";
+                    else if (col == 1) frameOut += "\x1b[91m";
+                    else if (col == 2) frameOut += "\x1b[94m";
+                    else if (col == 3) frameOut += "\x1b[93m";
                     lastColor = col;
                 }
                 frameOut += buffer[y][x];
@@ -312,33 +317,30 @@ bool startShooterGame() {
 
         cout << frameOut << flush;
 
-        // Framing
         this_thread::sleep_for(chrono::milliseconds(16));
         auto frameEnd = chrono::steady_clock::now();
         lastDt = chrono::duration<double>(frameEnd - frameStart).count();
-        if (lastDt < 0.001) lastDt = 0.016; 
+        if (lastDt < 0.001) lastDt = 0.016;
     }
 
-    // End transition
     shooter_console::clear();
-    
-    // 判断是否通关：分数>=2000视为通关
-    shooterGamePassed = (score >= 2000);
-    
+
+    // Pass condition: score >= 1500.
+    shooterGamePassed = (score >= 1500);
+
     if (shooterGamePassed) {
         cout << "\x1b[92m\n\nCONGRATULATIONS! YOU HANDLED ALL OF THESE! Score: " << score << "\x1b[0m\n" << flush;
     } else {
-        cout << "\x1b[91m\n\nGAME OVER... Score: " << score << " (Need 2000+ to pass)\x1b[0m\n" << flush;
+        cout << "\x1b[91m\n\nGAME OVER... Score: " << score << " (Need 1500+ to pass)\x1b[0m\n" << flush;
     }
     this_thread::sleep_for(chrono::milliseconds(2000));
-    
-    // Clear buffer again
-    cout << "\x1b[?25h"; // Show cursor
+
+    cout << "\x1b[?25h";
 #if defined(_WIN32)
-    SetConsoleMode(hConsole, mode); // Restore orig mode
+    SetConsoleMode(hConsole, mode);
     FlushConsoleInputBuffer(GetStdHandle(STD_INPUT_HANDLE));
 #endif
     shooter_console::clearInputBuffer();
-    
+
     return shooterGamePassed;
 }
