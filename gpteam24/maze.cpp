@@ -28,8 +28,11 @@
 
 using namespace std;
 
-// 控制台相关工具：负责颜色、清屏、光标、跨平台输入
+// Console utilities for color, screen control, cursor control, and cross-platform input handling.
 namespace console {
+    // What it does: Sets console text color based on project color code.
+    // Inputs: code is a game-defined color ID.
+    // Outputs: None.
     inline void setColor(int code) {
 #if defined(_WIN32)
         HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -49,6 +52,9 @@ namespace console {
 #endif
     }
 
+    // What it does: Moves console cursor to the given coordinate.
+    // Inputs: x is column index; y is row index.
+    // Outputs: None.
     inline void setPos(int x, int y) {
 #if defined(_WIN32)
         HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -59,6 +65,9 @@ namespace console {
 #endif
     }
 
+    // What it does: Clears the terminal screen.
+    // Inputs: None.
+    // Outputs: None.
     inline void clear() {
 #if defined(_WIN32)
         system("cls");
@@ -67,6 +76,9 @@ namespace console {
 #endif
     }
 
+    // What it does: Hides terminal cursor.
+    // Inputs: None.
+    // Outputs: None.
     inline void hideCursor() {
 #if defined(_WIN32)
         HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -79,6 +91,9 @@ namespace console {
 #endif
     }
 
+    // What it does: Shows terminal cursor.
+    // Inputs: None.
+    // Outputs: None.
     inline void showCursor() {
 #if defined(_WIN32)
         HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -91,6 +106,9 @@ namespace console {
 #endif
     }
 
+    // What it does: Polls keyboard input and normalizes to uppercase WASD-compatible key values.
+    // Inputs: None.
+    // Outputs: Returns latest input key, or 0 when no key is detected.
     inline char getInput() {
         char lastChar = 0;
 #if defined(_WIN32)
@@ -122,10 +140,16 @@ namespace console {
         return lastChar;
     }
 
+    // What it does: Drains pending input.
+    // Inputs: None.
+    // Outputs: None.
     inline void clearInputBuffer() {
         getInput();
     }
 
+    // What it does: Sleeps for a given amount of milliseconds.
+    // Inputs: ms is duration in milliseconds.
+    // Outputs: None.
     inline void sleep(int ms) {
         std::this_thread::sleep_for(std::chrono::milliseconds(ms));
     }
@@ -136,6 +160,9 @@ namespace console {
         bool active = false;
         int origFlags = 0;
 
+        // What it does: Enables Linux raw non-blocking terminal mode for game input.
+        // Inputs: None.
+        // Outputs: Constructs a guard that applies terminal state.
         LinuxTermGuard() {
             if (!isatty(STDIN_FILENO)) return;
             tcgetattr(STDIN_FILENO, &orig);
@@ -149,6 +176,9 @@ namespace console {
             active = true;
         }
 
+        // What it does: Restores original Linux terminal settings.
+        // Inputs: None.
+        // Outputs: None.
         ~LinuxTermGuard() {
             if (active) {
                 tcsetattr(STDIN_FILENO, TCSANOW, &orig);
@@ -159,6 +189,9 @@ namespace console {
 #endif
 }
 
+// What it does: Generates a timestamp-based save file name.
+// Inputs: None.
+// Outputs: Returns a save file name string.
 string generateSaveFileName() {
     time_t now = time(0);
     tm localTime;
@@ -183,6 +216,9 @@ string generateSaveFileName() {
     return ss.str();
 }
 
+// What it does: Collects all save files under current directory.
+// Inputs: None.
+// Outputs: Returns sorted list of save file names.
 vector<string> getSaveFiles() {
     vector<string> saveFiles;
     for (const auto& entry : filesystem::directory_iterator(".")) {
@@ -199,7 +235,9 @@ vector<string> getSaveFiles() {
     return saveFiles;
 }
 
-// 把迷宫当前状态全部写入文件，供下次读档恢复
+// What it does: Writes full maze runtime state to file for future loading.
+// Inputs: filename is output file path; state is maze state to persist.
+// Outputs: Returns true if save succeeds, otherwise false.
 bool saveMazeStateToFile(const string& filename, const MazeState& state) {
     ofstream fout(filename);
     if (!fout) return false;
@@ -227,10 +265,16 @@ bool saveMazeStateToFile(const string& filename, const MazeState& state) {
 bool isBlockedByStaticObjects(const MazeState& state, int x, int y);
 bool isBlockedByOtherEnemies(const MazeState& state, int x, int y, int ignoreIdx);
 
+// What it does: Checks whether a coordinate is inside map bounds.
+// Inputs: x/y is the coordinate, W/H are maze dimensions.
+// Outputs: Returns true if inside bounds, otherwise false.
 bool isInside(int x, int y, int W, int H) {
     return x >= 0 && x < W && y >= 0 && y < H;
 }
 
+// What it does: Checks whether a tile is occupied by static mini-game entrances.
+// Inputs: state contains entrance positions; x/y is the coordinate to test.
+// Outputs: Returns true when blocked by note/shooter/snake entrances, otherwise false.
 bool isBlockedByStaticObjects(const MazeState& state, int x, int y) {
     for (int i = 0; i < 3; i++) {
         if (state.noteX[i] == x && state.noteY[i] == y) return true;
@@ -240,6 +284,9 @@ bool isBlockedByStaticObjects(const MazeState& state, int x, int y) {
     return false;
 }
 
+// What it does: Checks whether a tile is occupied by enemies, ignoring one optional enemy index.
+// Inputs: state has enemy positions; x/y is coordinate; ignoreIdx is enemy index to skip.
+// Outputs: Returns true if blocked by other enemies, otherwise false.
 bool isBlockedByOtherEnemies(const MazeState& state, int x, int y, int ignoreIdx) {
     for (int i = 0; i < ENEMY_COUNT; i++) {
         if (i == ignoreIdx) continue;
@@ -248,7 +295,9 @@ bool isBlockedByOtherEnemies(const MazeState& state, int x, int y, int ignoreIdx
     return false;
 }
 
-// 随机初始化 4 个怪物，并给每只怪物分配一个活动区域
+// What it does: Randomly initializes enemy positions and assigns each enemy a movement zone.
+// Inputs: state receives enemy values; maze is maze map; W/H are maze dimensions.
+// Outputs: None.
 void initEnemies(MazeState& state, const string maze[], int W, int H) {
     for (int i = 0; i < ENEMY_COUNT; i++) {
         do {
@@ -269,7 +318,9 @@ void initEnemies(MazeState& state, const string maze[], int W, int H) {
     }
 }
 
-// 打完问答小游戏后，把触发过的怪物重新放到别处
+// What it does: Repositions one enemy after its quiz event and resets its movement zone.
+// Inputs: state holds enemy data; maze is maze map; W/H are dimensions; idx is enemy index.
+// Outputs: None.
 void resetOneEnemy(MazeState& state, const string maze[], int W, int H, int idx) {
     do {
         state.enemyX[idx] = rand() % W;
@@ -288,7 +339,9 @@ void resetOneEnemy(MazeState& state, const string maze[], int W, int H, int idx)
     state.enemyDir[idx] = 1;
 }
 
-// 判断怪物是否能站在某一格：不能越界、不能穿墙、不能压住入口或别的怪物
+// What it does: Validates whether an enemy can stand on a target tile.
+// Inputs: maze map and dimensions, current state, x/y target, ignoreIdx enemy to skip.
+// Outputs: Returns true if tile is valid and unblocked, otherwise false.
 bool canEnemyStandAt(const string maze[], int W, int H,
                      const MazeState& state, int x, int y, int ignoreIdx) {
     if (!isInside(x, y, W, H)) return false;
@@ -298,13 +351,15 @@ bool canEnemyStandAt(const string maze[], int W, int H,
     return true;
 }
 
-// 判断玩家是否处于第 i 只怪物的活动区域内
+// What it does: Checks whether player is inside enemy i's movement zone.
+// Inputs: state contains player and enemy zone data; i is enemy index.
+// Outputs: Returns true if player is in enemy zone, otherwise false.
 bool playerInEnemyZone(const MazeState& state, int i) {
     return state.playerX >= state.enemyMinX[i] && state.playerX <= state.enemyMaxX[i] &&
            state.playerY >= state.enemyMinY[i] && state.playerY <= state.enemyMaxY[i];
 }
 
-// 怪物逻辑：玩家靠近时追一步，否则在自己的区域内慢速水平巡逻
+// What it does: Updates all enemy movement each tick (chase near player or patrol in zone).
 void updateEnemies(MazeState& state, const string maze[], int W, int H) {
     for (int i = 0; i < ENEMY_COUNT; i++) {
         int ex = state.enemyX[i];
@@ -356,7 +411,9 @@ void updateEnemies(MazeState& state, const string maze[], int W, int H) {
     }
 }
 
-// 玩家贴近怪物时返回对应怪物编号，否则返回 -1
+// What it does: Finds whether player is adjacent to any enemy.
+// Inputs: state includes player and enemy positions.
+// Outputs: Returns enemy index if triggered; returns -1 if none.
 int findTriggeredEnemy(const MazeState& state) {
     for (int i = 0; i < ENEMY_COUNT; i++) {
         int dist = abs(state.playerX - state.enemyX[i]) + abs(state.playerY - state.enemyY[i]);
@@ -365,6 +422,9 @@ int findTriggeredEnemy(const MazeState& state) {
     return -1;
 }
 
+// What it does: Loads maze state from save file into state object.
+// Inputs: filename is save file path; state receives loaded values.
+// Outputs: Returns true if loading succeeds, otherwise false.
 bool loadMazeStateFromFile(const string& filename, MazeState& state) {
     ifstream fin(filename);
     if (!fin) return false;
@@ -405,7 +465,7 @@ bool loadMazeStateFromFile(const string& filename, MazeState& state) {
         state.wallBreakers = 0;
     }
 
-    // 读破墙记录
+    // Read broken-wall history.
     int numBroken = 0;
     state.brokenWalls.clear();
     if (fin >> numBroken) {
@@ -420,7 +480,9 @@ bool loadMazeStateFromFile(const string& filename, MazeState& state) {
     return true;
 }
 
-// 整屏重绘迷宫
+// What it does: Redraws the entire maze frame with player, enemies, and entrance markers.
+// Inputs: state is current runtime state; maze is map; W/H are map dimensions; nearNote indicates interaction hint visibility.
+// Outputs: None.
 void drawMazeFrame(const MazeState& state, const string maze[], int W, int H, bool nearNote) {
     console::setPos(0, 0);
     cout << "Use W/A/S/D to move. Press Q to quit maze. P:Shop. Press O to quit shop.";
@@ -501,11 +563,14 @@ void drawMazeFrame(const MazeState& state, const string maze[], int W, int H, bo
     std::cout.flush();
 }
 
-// ==================== 通关结局显示 ====================
+// ==================== Victory ending screen ====================
+// What it does: Shows the victory screen after reaching maze exit.
+// Inputs: None.
+// Outputs: None.
 void showVictoryScreen() {
     console::clear();
     console::hideCursor();
-    
+
     std::cout << "\n\n\n";
     std::cout << "    ****************************************************\n\n";
     std::cout << "         C O N G R A T U L A T I O N S ! ! !\n\n";
@@ -517,15 +582,18 @@ void showVictoryScreen() {
     std::cout << "    ****************************************************\n\n";
     std::cout << "\n\n         Press Enter to return to main menu...";
     std::cout.flush();
-    
+
     console::showCursor();
 }
 
-// ==================== 血量检测失败结局 ====================
+// ==================== Game-over ending screen ====================
+// What it does: Shows the game-over screen when player health reaches zero.
+// Inputs: None.
+// Outputs: None.
 void showGameOverScreen() {
     console::clear();
     console::hideCursor();
-    
+
     std::cout << "\n\n\n";
     std::cout << "    ****************************************************\n\n";
     std::cout << "              G A M E   O V E R\n\n";
@@ -536,11 +604,13 @@ void showGameOverScreen() {
     std::cout << "    ****************************************************\n\n";
     std::cout << "\n\n         Press Enter to return to main menu...";
     std::cout.flush();
-    
+
     console::showCursor();
 }
 
-// ==================== 显示血量 ====================
+// What it does: Displays current HP, coins, and wall-breaker count under the maze.
+// Inputs: state holds player status; MAZE_HEIGHT is used for output row positioning.
+// Outputs: None.
 void displayHealth(const MazeState& state, int MAZE_HEIGHT) {
     console::setPos(0, MAZE_HEIGHT + 3);
     cout << "HP: [";
@@ -561,10 +631,13 @@ void displayHealth(const MazeState& state, int MAZE_HEIGHT) {
         cout << "   Breakers: " << state.wallBreakers;
         console::setColor(0);
     }
-    cout << "          ";   // 清除残留字符
+    cout << "          ";   // Clear remaining characters.
     cout.flush();
 }
 
+// What it does: Waits for one raw key input and returns uppercase printable key.
+// Inputs: None.
+// Outputs: Returns pressed key as uppercase char.
 static char waitForKeyRaw() {
     console::clearInputBuffer();
     while (true) {
@@ -590,6 +663,9 @@ static char waitForKeyRaw() {
     }
 }
 
+// What it does: Displays the in-maze shop and handles purchase interactions.
+// Inputs: state is mutable and receives purchase effects.
+// Outputs: None.
 void showShop(MazeState& state) {
     bool inShop = true;
     while (inShop) {
@@ -603,7 +679,7 @@ void showShop(MazeState& state) {
             << "    Breakers: " << state.wallBreakers << "\n\n";
         cout << "  [1] Heal Potion  - 1 Coin\n";
         cout << "      Restore 1 HP\n\n";
-        cout << "  [2] Wall Breaker - 5 Coins\n";
+        cout << "  [2] Wall Breaker - 2 Coins\n";
         cout << "      Break one wall (press B in maze)\n\n";
         cout << "  [K] Exit Shop\n";
         cout << "  ================================\n\n";
@@ -628,11 +704,11 @@ void showShop(MazeState& state) {
             console::sleep(800);
         }
         else if (ch == '2') {
-            if (state.coins < 5) {
+            if (state.coins < 2) {
                 cout << "Not enough coins!";
             }
             else {
-                state.coins -= 5;
+                state.coins -= 2;
                 state.wallBreakers++;
                 cout << "Purchased! Breakers -> " << state.wallBreakers;
             }
@@ -645,6 +721,9 @@ void showShop(MazeState& state) {
     }
 }
 
+// What it does: Attempts to break one adjacent wall using a wall-breaker item.
+// Inputs: state is mutable player state; maze is mutable map; W/H are map dimensions.
+// Outputs: Returns true when a wall is broken, otherwise false.
 bool handleWallBreaker(MazeState& state, string maze[], int W, int H) {
     console::setPos(0, H + 5);
     cout << "Break wall: W/A/S/D to pick direction, other key to cancel   ";
@@ -666,7 +745,7 @@ bool handleWallBreaker(MazeState& state, string maze[], int W, int H) {
         return false;
     }
 
-    // 不能打最外一圈
+    // Border walls are not breakable.
     if (tx <= 0 || tx >= W - 1 || ty <= 0 || ty >= H - 1) {
         console::setPos(0, H + 5);
         cout << "Cannot break border walls!                                    ";
@@ -696,12 +775,17 @@ bool handleWallBreaker(MazeState& state, string maze[], int W, int H) {
     return true;
 }
 
+// What it does: Starts maze with a fresh default state.
+// Inputs: None.
+// Outputs: None.
 void startMaze() {
     MazeState state;
     startMaze(state, false);
 }
 
-
+// What it does: Runs the full maze gameplay loop including mini-games, enemies, save/load handling, and endings.
+// Inputs: state is mutable maze state; useSavedState decides whether to initialize from saved data.
+// Outputs: None.
 void startMaze(MazeState& state, bool useSavedState) {
     MusicManager::playBackgroundMusic("music/maze_bg.mp3");
     srand(static_cast<unsigned int>(time(0)));
@@ -724,10 +808,8 @@ void startMaze(MazeState& state, bool useSavedState) {
         "#.#.#.#.#######.#########.#.#.#.#.#.#########.#######.#.#.#.#",
         "#.#.#.#.#.......#.........#.#.#.#.#.........#.......#.#.#.#.#",
         "#.#.#.#.#.#######.#########.#.#.#.#########.#######.#.#.#.#.#",
-        "#.#.#.#.#.#.......#.........#.#.#.........#.......#.#.#.#.#.#",
-        "#.#.#.#.#.#.#######.#########.#.#########.#######.#.#.#.#.#.#",
         "#.#.#.#.#.#.......#...........#...........#.......#.#.#.#.#.#",
-        "#.###.#.#.#######.#########################.#######.#.#.###.#",
+        "#.#.#.#.#.#.#######.#########################.#######.#.#.###.#",
         "#.....#.#.......#.........................#.......#.#.....#.#",
         "#######.#######.###########################.#######.#######.#",
         "#.............#...........................#.............#...#",
@@ -739,17 +821,19 @@ void startMaze(MazeState& state, bool useSavedState) {
         "#.#.....#.................................#.....#.......#.#.#",
         "#.#.###.###################################.###.#.#####.#.#.#",
         "#...#.........................................#.........#...#",
-        "###########################       ###########################"
+        "###########################       ###########################",
+        "#...........................#####...........................#",
+        "###########################.......###########################"
     };
 
-    // 清出中心出生点周围的 3x3 区域，确保玩家出生后可移动
+    // Clear a 3x3 area around the center spawn point to ensure initial movement space.
     for (int dy = -1; dy <= 1; dy++) {
         for (int dx = -1; dx <= 1; dx++) {
             maze[15 + dy][30 + dx] = '.';
         }
     }
 
-    // 把存档中记录的碎墙重新应用到迷宫数组上
+    // Re-apply broken-wall records from save state onto the maze map.
     for (const auto& p : state.brokenWalls) {
         int bx = p.first;
         int by = p.second;
@@ -770,9 +854,9 @@ void startMaze(MazeState& state, bool useSavedState) {
     if (!useSavedState) {
         playerX = 30;
         playerY = 15;
-        state.health = 15;  // 初始10点血量
+        state.health = 15;  // Initial health is 15.
 
-        // 新开游戏时随机放置三个音游入口
+        // Randomly place three music-game entrances for a new run.
         for (int i = 0; i < 3; i++) {
             do {
                 noteX[i] = rand() % MAZE_WIDTH;
@@ -781,7 +865,7 @@ void startMaze(MazeState& state, bool useSavedState) {
                      (noteX[i] >= 29 && noteX[i] <= 31 && noteY[i] >= 14 && noteY[i] <= 16));
         }
 
-        // 随机放置三个弹幕入口
+        // Randomly place three shooter-game entrances.
         for (int i = 0; i < 3; i++) {
             do {
                 shooterX[i] = rand() % MAZE_WIDTH;
@@ -793,7 +877,7 @@ void startMaze(MazeState& state, bool useSavedState) {
                      (shooterX[i] == noteX[2] && shooterY[i] == noteY[2]));
         }
 
-        // 随机放置三个贪吃蛇入口
+        // Randomly place three snake-game entrances.
         for (int i = 0; i < 3; i++) {
             do {
                 snakeX[i] = rand() % MAZE_WIDTH;
@@ -851,7 +935,7 @@ void startMaze(MazeState& state, bool useSavedState) {
     bool nearNote = false;
     drawMazeFrame(state, maze, MAZE_WIDTH, MAZE_HEIGHT, nearNote);
     
-    // 显示初始血量
+    // Display initial health/status bar.
     displayHealth(state, MAZE_HEIGHT);
 
     bool inMaze = true;
@@ -861,7 +945,7 @@ void startMaze(MazeState& state, bool useSavedState) {
     console::clearInputBuffer();
 
     while (inMaze) {
-        // 玩家靠近 shooter 入口时自动进入弹幕小游戏
+        // Auto-enter shooter mini-game when player is close to shooter entrance.
         bool nearShooter = false;
         for (int i = 0; i < 3; i++) {
             if (abs(playerX - shooterX[i]) <= 1 && abs(playerY - shooterY[i]) <= 1) {
@@ -871,11 +955,11 @@ void startMaze(MazeState& state, bool useSavedState) {
         }
 
         if (nearShooter) {
-            MusicManager::pause();  // 暂停迷宫音乐
+            MusicManager::pause();  // Pause maze music.
             bool passed = startShooterGame();
-            MusicManager::playBackgroundMusic("music/maze_bg.mp3");  // 重新播放迷宫音乐
+            MusicManager::playBackgroundMusic("music/maze_bg.mp3");  // Restore maze background music.
 
-			// 射击游戏失败则扣血，成功则加金币
+            // Shooter failure reduces HP, success grants coins.
             if (passed) {
                 state.coins++;
             }
@@ -884,7 +968,7 @@ void startMaze(MazeState& state, bool useSavedState) {
                 state.health -= 3;
                 if (state.health <= 0) {
                     state.health = 0;
-                    MusicManager::stop();  // 停止迷宫音乐，让主菜单播放回主菜单音乐
+                    MusicManager::stop();  // Stop maze music so main menu can resume its own BGM.
                     console::clear();
                     console::showCursor();
                     showGameOverScreen();
@@ -896,6 +980,7 @@ void startMaze(MazeState& state, bool useSavedState) {
                 }
             }
 
+            // Re-randomize shooter positions.
             for (int i = 0; i < 3; i++) {
                 do {
                     shooterX[i] = rand() % MAZE_WIDTH;
@@ -915,7 +1000,7 @@ void startMaze(MazeState& state, bool useSavedState) {
             continue;
         }
 
-        // 玩家靠近 snake 入口时自动进入贪吃蛇小游戏
+        // Auto-enter snake mini-game when player is close to snake entrance.
         bool nearSnake = false;
         for (int i = 0; i < 3; i++) {
             if (abs(playerX - snakeX[i]) <= 1 && abs(playerY - snakeY[i]) <= 1) {
@@ -925,11 +1010,11 @@ void startMaze(MazeState& state, bool useSavedState) {
         }
 
         if (nearSnake) {
-            MusicManager::pause();  // 暂停迷宫音乐
+            MusicManager::pause();  // Pause maze music.
             bool passed = startSnakeGame();
-            MusicManager::playBackgroundMusic("music/maze_bg.mp3");  // 重新播放迷宫音乐
+            MusicManager::playBackgroundMusic("music/maze_bg.mp3");  // Restore maze background music.
 
-			// 贪吃蛇失败则扣血，成功则加金币
+            // Snake failure reduces HP, success grants coins.
             if (passed) {
                 state.coins++;
             }
@@ -938,7 +1023,7 @@ void startMaze(MazeState& state, bool useSavedState) {
                 state.health -= 3;
                 if (state.health <= 0) {
                     state.health = 0;
-                    MusicManager::stop();  // 停止迷宫音乐，让主菜单播放回主菜单音乐
+                    MusicManager::stop();  // Stop maze music so main menu can resume its own BGM.
                     console::clear();
                     console::showCursor();
                     showGameOverScreen();
@@ -950,6 +1035,7 @@ void startMaze(MazeState& state, bool useSavedState) {
                 }
             }
 
+            // Re-randomize snake positions.
             for (int i = 0; i < 3; i++) {
                 do {
                     snakeX[i] = rand() % MAZE_WIDTH;
@@ -969,7 +1055,7 @@ void startMaze(MazeState& state, bool useSavedState) {
             continue;
         }
 
-        // 靠近音符入口时，在顶部显示 E 键提示
+        // Show E-key interaction hint when close to a music-note entrance.
         nearNote = false;
         for (int i = 0; i < 3; i++) {
             if (abs(playerX - noteX[i]) <= 1 && abs(playerY - noteY[i]) <= 1) {
@@ -1008,7 +1094,7 @@ void startMaze(MazeState& state, bool useSavedState) {
         else if (inKey == 'B' && state.wallBreakers > 0) { doBreak = true; }
 #endif
 
-        // 商店
+        // Shop.
         if (doShop) {
             showShop(state);
             console::clear();
@@ -1019,7 +1105,7 @@ void startMaze(MazeState& state, bool useSavedState) {
             continue;
         }
 
-        // 使用破墙道具
+        // Use wall-breaker item.
         if (doBreak) {
             handleWallBreaker(state, maze, MAZE_WIDTH, MAZE_HEIGHT);
             drawMazeFrame(state, maze, MAZE_WIDTH, MAZE_HEIGHT, nearNote);
@@ -1028,14 +1114,14 @@ void startMaze(MazeState& state, bool useSavedState) {
             continue;
         }
 
-        // 音符入口需要按 E 才进入音游
+        // Music-note entrance requires pressing E to enter music mini-game.
         if (doInteract) {
             console::sleep(200);
-            MusicManager::pause();  // 暂停迷宫音乐
+            MusicManager::pause();  // Pause maze music.
             bool passed = startMusicGame();
-            MusicManager::playBackgroundMusic("music/maze_bg.mp3");  // 重新播放迷宫音乐
+            MusicManager::playBackgroundMusic("music/maze_bg.mp3");  // Restore maze background music.
 
-			// 音游失败则扣血，成功则加金币
+            // Music-game failure reduces HP, success grants coins.
             if (passed) {
                 state.coins++;
             }
@@ -1044,7 +1130,7 @@ void startMaze(MazeState& state, bool useSavedState) {
                 state.health -= 3;
                 if (state.health <= 0) {
                     state.health = 0;
-                    MusicManager::stop();  // 停止迷宫音乐，让主菜单播放回主菜单音乐
+                    MusicManager::stop();  // Stop maze music so main menu can resume its own BGM.
                     console::clear();
                     console::showCursor();
                     showGameOverScreen();
@@ -1056,6 +1142,7 @@ void startMaze(MazeState& state, bool useSavedState) {
                 }
             }
 
+            // Re-randomize note positions.
             for (int i = 0; i < 3; i++) {
                 do {
                     noteX[i] = rand() % MAZE_WIDTH;
@@ -1069,7 +1156,7 @@ void startMaze(MazeState& state, bool useSavedState) {
             continue;
         }
 
-        // 按 Q 时保存当前迷宫状态后退出
+        // Save current maze state and quit when Q is pressed.
         if (doQuit) {
             console::setPos(0, MAZE_HEIGHT + 4);
             string filename = generateSaveFileName();
@@ -1083,15 +1170,15 @@ void startMaze(MazeState& state, bool useSavedState) {
             continue;
         }
         
-        // 玩家只能走到非墙体位置
+        // Player can only move onto non-wall tiles.
         if (tryMove && nextX >= 0 && nextX < MAZE_WIDTH && nextY >= 0 && nextY < MAZE_HEIGHT) {
             if (maze[nextY][nextX] != '#') {
                 playerX = nextX;
                 playerY = nextY;
-                
-                // 检测是否到达出口（迷宫底部第30行，空列27-33）
+
+                // Check maze exit (row 30, columns 27-33).
                 if (playerY == 30 && playerX >= 27 && playerX <= 33) {
-                    MusicManager::stop();  // 停止迷宫音乐，让主菜单播放回主菜单音乐
+                    MusicManager::stop();  // Stop maze music so main menu can resume its own BGM.
                     console::clear();
                     console::showCursor();
                     showVictoryScreen();
@@ -1110,14 +1197,14 @@ void startMaze(MazeState& state, bool useSavedState) {
             enemyTick = 0;
         }
 
-        // 玩家贴近怪物时进入问答小游戏，结束后怪物重置
+        // Enter enemy quiz when player gets close to an enemy, then reset that enemy.
         int hitEnemy = findTriggeredEnemy(state);
         if (hitEnemy != -1) {
-            MusicManager::pause();  // 暂停迷宫音乐
+            MusicManager::pause();  // Pause maze music
             bool passed = startEnemyQuiz();
-            MusicManager::resume();  // 继续播放迷宫音乐
+            MusicManager::resume();  // Resume maze music
             
-			// 问答失败则扣血,反之加金币
+			// Quiz failure reduces HP; success grants coins.
             if (passed) {
                 state.coins++;
             }
@@ -1125,7 +1212,7 @@ void startMaze(MazeState& state, bool useSavedState) {
                 state.health -= 3;
                 if (state.health <= 0) {
                     state.health = 0;
-                    MusicManager::stop();  // 停止迷宫音乐，让主菜单播放回主菜单音乐
+                    MusicManager::stop();  // Stop maze music so main menu can resume its own BGM
                     console::clear();
                     console::showCursor();
                     showGameOverScreen();
