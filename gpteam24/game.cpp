@@ -10,8 +10,11 @@
 
 using namespace std;
 
+// What it does: Shows the main menu loop, handles user choices, and routes to game flows.
+// Inputs: None.
+// Outputs: None.
 void showMainMenu() {
-    // 播放主菜单背景音乐
+    // Play main menu background music.
     MusicManager::playBackgroundMusic("music/menu_bg.mp3");
 
     bool isRunning = true;
@@ -22,7 +25,7 @@ void showMainMenu() {
         std::cout << "\x1b[2J\x1b[H";
         #endif
 
-        // 打印巨大字体的 ASCII Art
+        // Print large ASCII art title.
         cout << R"(
   ______  _____  _____          _____  ______ 
  |  ____|/ ____|/ ____|   /\   |  __ \|  ____|
@@ -76,7 +79,7 @@ void showMainMenu() {
             loadGame();
         } else if (choice == "3") {
             quitGame();
-            isRunning = false; // 退出主循环
+            isRunning = false; // Exit main loop.
         } else {
             cout << "Invalid choice! Press Enter to try again...\n";
             cin.ignore();
@@ -85,6 +88,9 @@ void showMainMenu() {
     }
 }
 
+// What it does: Starts a fresh maze run and restores menu music after maze ends.
+// Inputs: None.
+// Outputs: None.
 void newGame() {
 #if defined(_WIN32)
     system("cls");
@@ -93,14 +99,17 @@ void newGame() {
 #endif
     cout << "\n\nYou wake up in the Main Building of HKU, your mind is blank...\n" << std::flush;
     std::this_thread::sleep_for(std::chrono::seconds(3));
-    
+
     MazeState state;
     startMaze(state, false);
-    
-    // 迷宫结束后重新播放主菜单音乐
+
+    // Restore main menu music after leaving maze.
     MusicManager::playBackgroundMusic("music/menu_bg.mp3");
 }
 
+// What it does: Displays available save files, loads selected save state, and starts maze.
+// Inputs: None.
+// Outputs: None.
 void loadGame() {
 #if defined(_WIN32)
     system("cls");
@@ -143,7 +152,7 @@ void loadGame() {
         cout << "\nSave file loaded successfully!\n";
         std::this_thread::sleep_for(std::chrono::seconds(1));
         startMaze(state, true);
-        // 迷宫结束后重新播放主菜单音乐
+        // Restore main menu music after leaving maze.
         MusicManager::playBackgroundMusic("music/menu_bg.mp3");
     } else {
         cout << "\nFailed to load save file.\n";
@@ -153,6 +162,9 @@ void loadGame() {
     }
 }
 
+// What it does: Executes quit flow message from the menu.
+// Inputs: None.
+// Outputs: None.
 void quitGame() {
     cout << "\nExiting game... Goodbye!\n";
 }
