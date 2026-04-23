@@ -27,16 +27,15 @@
 
 using namespace std;
 
-// -------------------- �ؿ����� --------------------
 struct Stage {
-    std::string id;          // �ؿ����
-    std::string singer;      // ����
-    std::string music;       // ����
-    std::string chartPath;   // �����ļ�·��
-    std::string musicPath;   // �����ļ�·��
+    std::string id;          // Stage ID.
+    std::string singer;      // Artist name.
+    std::string music;       // Song title.
+    std::string chartPath;   // Chart file path.
+    std::string musicPath;   // Music file path.
 };
 
-//�ڴ����ӹؿ�
+// Built-in stage list.
 static const std::vector<Stage> stages = {
     { "1", "Yorushika", "Paddle", "charts/yorushika_paddle.chart", "music/yorushika_paddle.mp3" },
     { "2", "ZUTOMAYO", "Justice", "charts/zutomayo_justice.chart", "music/zutomayo_justice.mp3" },
@@ -44,27 +43,80 @@ static const std::vector<Stage> stages = {
 	{"4","n-buna","because summer will end","charts/n-buna_because_summer_will_end.chart","music/n-buna_because_summer_will_end.mp3"},
 };
 
-// -------------------- �ն˹��ߣ�ANSI�� --------------------
+// ANSI terminal helper utilities.
 namespace term {
     static const char* CSI = "\x1b[";
 
+    // What it does: Hides terminal cursor.
+    // Inputs: None.
+    // Outputs: None.
     void hideCursor() { std::cout << CSI << "?25l"; }
+
+    // What it does: Shows terminal cursor.
+    // Inputs: None.
+    // Outputs: None.
     void showCursor() { std::cout << CSI << "?25h"; }
+
+    // What it does: Clears terminal screen.
+    // Inputs: None.
+    // Outputs: None.
     void clearScreen() { std::cout << CSI << "2J"; }
+
+    // What it does: Moves cursor to home position.
+    // Inputs: None.
+    // Outputs: None.
     void moveHome() { std::cout << CSI << "H"; }
+
+    // What it does: Resets terminal text attributes.
+    // Inputs: None.
+    // Outputs: None.
     void resetColor() { std::cout << CSI << "0m"; }
+
+    // What it does: Moves cursor to row/column.
+    // Inputs: r is row index, c is column index.
+    // Outputs: None.
     void moveTo(int r, int c) { std::cout << CSI << r << ";" << c << "H"; }
-    void setBlue() { std::cout << CSI << "34m"; }  // ��ɫ
-    void setBrightBlue() { std::cout << CSI << "94m"; }  // ����ɫ
-    void setRed() { std::cout << CSI << "91m"; }  // ����ɫ
-    void setYellow() { std::cout << CSI << "93m"; }  // ����ɫ
-    void setGreen() { std::cout << CSI << "92m"; }  // ����ɫ
-    void setBrightCyan() { std::cout << CSI << "96m"; }  // ����ɫ
-    void setNoteStyle() { std::cout << CSI << "1;97;44m"; }  // �Ӵְ�ɫ���� + ��ɫ����
+
+    // What it does: Sets blue text color.
+    // Inputs: None.
+    // Outputs: None.
+    void setBlue() { std::cout << CSI << "34m"; }
+
+    // What it does: Sets bright blue text color.
+    // Inputs: None.
+    // Outputs: None.
+    void setBrightBlue() { std::cout << CSI << "94m"; }
+
+    // What it does: Sets red text color.
+    // Inputs: None.
+    // Outputs: None.
+    void setRed() { std::cout << CSI << "91m"; }
+
+    // What it does: Sets yellow text color.
+    // Inputs: None.
+    // Outputs: None.
+    void setYellow() { std::cout << CSI << "93m"; }
+
+    // What it does: Sets green text color.
+    // Inputs: None.
+    // Outputs: None.
+    void setGreen() { std::cout << CSI << "92m"; }
+
+    // What it does: Sets bright cyan text color.
+    // Inputs: None.
+    // Outputs: None.
+    void setBrightCyan() { std::cout << CSI << "96m"; }
+
+    // What it does: Sets note highlight style used for falling notes.
+    // Inputs: None.
+    // Outputs: None.
+    void setNoteStyle() { std::cout << CSI << "1;97;44m"; }
 
 #if defined(_WIN32)
+    // What it does: Enables ANSI VT processing on Windows console.
+    // Inputs: None.
+    // Outputs: Returns true if VT mode is enabled, otherwise false.
     bool enableVT() {
-        // ���� Windows 10+ �������ն˴�����ANSI��
         HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
         if (hOut == INVALID_HANDLE_VALUE) return false;
         DWORD mode = 0;
@@ -81,21 +133,28 @@ namespace term {
         TermiosGuard() { enterRaw(); }
         ~TermiosGuard() { restore(); }
 
+        // What it does: Switches Linux terminal to raw non-blocking mode.
+        // Inputs: None.
+        // Outputs: None.
         void enterRaw() {
             if (!isatty(STDIN_FILENO)) return;
             if (tcgetattr(STDIN_FILENO, &orig) == -1) return;
 
             termios raw = orig;
-            raw.c_lflag &= ~(ICANON | ECHO);  // �ǹ淶 + �رջ���
-            raw.c_cc[VMIN] = 0;              // ������
+            raw.c_lflag &= ~(ICANON | ECHO);  // Disable canonical mode and echo.
+            raw.c_cc[VMIN] = 0;               // Non-blocking read.
             raw.c_cc[VTIME] = 0;
             if (tcsetattr(STDIN_FILENO, TCSANOW, &raw) == -1) return;
 
-            // �� stdin ������
+            // Set stdin to non-blocking mode.
             origFlags = fcntl(STDIN_FILENO, F_GETFL, 0);
             fcntl(STDIN_FILENO, F_SETFL, origFlags | O_NONBLOCK);
             ok = true;
         }
+
+        // What it does: Restores original Linux terminal mode.
+        // Inputs: None.
+        // Outputs: None.
         void restore() {
             if (!ok) return;
             tcsetattr(STDIN_FILENO, TCSANOW, &orig);
@@ -106,15 +165,25 @@ namespace term {
 #endif
 } // namespace term
 
-// -------------------- ���루����¼"���±���"�� --------------------
+// Input state that records keys pressed in current frame.
 struct Input {
     array<bool, 256> justPressed{};
 
+    // What it does: Clears current-frame input flags.
+    // Inputs: None.
+    // Outputs: None.
     void clear() { justPressed.fill(false); }
 
+    // What it does: Marks one key as pressed in this frame.
+    // Inputs: ch is key code.
+    // Outputs: None.
     void pushChar(unsigned char ch) {
         if (ch < justPressed.size()) justPressed[ch] = true;
     }
+
+    // What it does: Checks whether a key is marked pressed in this frame.
+    // Inputs: ch is key character.
+    // Outputs: Returns true if key is pressed, otherwise false.
     bool pressed(char ch) const {
         unsigned char u = static_cast<unsigned char>(toupper(static_cast<unsigned char>(ch)));
         return u < justPressed.size() ? justPressed[u] : false;
@@ -122,12 +191,15 @@ struct Input {
 };
 
 #if defined(_WIN32)
+// What it does: Polls Windows keyboard input into Input buffer.
+// Inputs: in is mutable input buffer.
+// Outputs: None.
 void pollInput(Input& in) {
     in.clear();
     while (_kbhit()) {
         int ch = _getch();
         if (ch == 0 || ch == 224) {
-            // ��չ����������ȣ����ٴ� _getch() ��ȡɨ���룬�������
+            // Extended key prefix: consume scan code and ignore.
             (void)_getch();
         }
         else {
@@ -138,6 +210,9 @@ void pollInput(Input& in) {
     }
 }
 #else
+// What it does: Polls Linux keyboard input into Input buffer.
+// Inputs: in is mutable input buffer.
+// Outputs: None.
 void pollInput(Input& in) {
     in.clear();
     unsigned char buf[64];
@@ -146,7 +221,7 @@ void pollInput(Input& in) {
         if (n <= 0) break;
         for (ssize_t i = 0; i < n; ++i) {
             unsigned char c = buf[i];
-            // ������Է������ ESC ���У���������ĸ��
+            // Convert letters to uppercase; ignore unsupported escape sequences.
             if (isalpha(c)) c = static_cast<unsigned char>(toupper(c));
             in.pushChar(c);
         }
@@ -154,75 +229,77 @@ void pollInput(Input& in) {
 }
 #endif
 
-// -------------------- ��Ϸ���ݽṹ --------------------
+// Core gameplay note data.
 struct Note {
-    int lane = 0;     // 0..5 -> S D F | J K L
-    double y = 0.0;   // 0 ��������������
-    bool dead = false; // ���л�ʱ
+    int lane = 0;      // 0..5 -> S D F | J K L.
+    double y = 0.0;    // Vertical position.
+    bool dead = false; // Whether note should be removed.
 };
 
-// �ж�������Ϣ
+// Floating judge-feedback info.
 struct JudgeFeedback {
     std::string text = "";
     int lane = -1;
     double timer = 0.0;
-    int color = 0; // 0=��, 1=��ɫ(Perfect), 2=��ɫ(Good), 3=��ɫ(Miss)
+    int color = 0; // 0=none, 1=Perfect, 2=Good, 3=Miss.
 };
 
 struct Game {
-    // ��Ļ�ߴ磨�С��У�
+    // Screen size.
     int H = 28;
     int W = 64;
 
-    // 6 �� X ���꣨�У�
+    // Lane X positions.
     int lanes = 6;
     int laneX[6] = { 10, 18, 26, 38, 46, 54 };
 
-    // �ж��� Y���У�
+    // Judge line Y.
     int judgeY = 24;
 
-    // �ж����ڣ���λ���У�
-    int perfectWindow = 1; // ��1 ��
-    int goodWindow = 2; // ��2 ��
+    // Judge windows in rows.
+    int perfectWindow = 1;
+    int goodWindow = 2;
 
-    // �����ٶ������Ƶ��
+    // Note speed and spawn timing controls.
     double speedRowsPerSec = 15.0;
     double spawnInterval = 0.6;
     double spawnTimer = 0.0;
 
-    // ����������������
+    // Runtime score state.
     int score = 0;
     int combo = 0;
     int maxCombo = 0;
     int life = 100;
-    
-    // �ж�ͳ��
+
+    // Judge statistics.
     int perfectCount = 0;
     int goodCount = 0;
     int missCount = 0;
 
     vector<Note> notes;
-    
-    // �ж�����
-    JudgeFeedback feedback;
-    array<double, 6> laneHitTimer{}; // ����������ʱ��
 
-    // ��λӳ�䣨6 �죩��S D F | J K L
+    // Judge feedback overlay.
+    JudgeFeedback feedback;
+    array<double, 6> laneHitTimer{}; // Lane flash timers.
+
+    // Lane key mapping for 6 lanes.
     array<char, 6> laneKeys = { 'S','D','F','J','K','L' };
-    
-    // ����ģʽ
+
+    // Chart mode state.
     bool useChart = false;
     ChartData chart;
     size_t nextNoteIndex = 0;
-    double gameTime = 0.0;  // ��Ϸʱ�䣨�룩
-    
-    // ���׽������
-    bool chartFinished = false;    // ���������Ѵ������
-    double finishTimer = 0.0;      // ������ĵ���ʱ���룩
-    static constexpr double FINISH_DELAY = 1.0; // ������ȴ�1��
-    bool gameOver = false;         // ������Ϸ�Ƿ����
-    
-    // ��������
+    double gameTime = 0.0;  // Elapsed gameplay time in seconds.
+
+    // Song-end state.
+    bool chartFinished = false;    // All chart notes have been consumed.
+    double finishTimer = 0.0;      // Delay timer after song end.
+    static constexpr double FINISH_DELAY = 1.0; // End delay in seconds.
+    bool gameOver = false;         // Life-based game-over flag.
+
+    // What it does: Loads chart data and resets chart-related runtime state.
+    // Inputs: filepath is chart file path.
+    // Outputs: Returns true if chart loads successfully, otherwise false.
     bool loadChart(const std::string& filepath) {
         if (chart.loadFromFile(filepath)) {
             useChart = true;
@@ -231,55 +308,62 @@ struct Game {
             chartFinished = false;
             finishTimer = 0.0;
             gameOver = false;
-            
-            // ����BPM�����ٶ�
+
+            // Keep gameplay speed at default regardless of BPM.
             speedRowsPerSec = 15.0;
-            
+
             return true;
         }
         return false;
     }
-    
-    // ���������Ƿ�����������Ļ���޴������
+
+    // What it does: Checks whether all chart notes are spawned and all active notes are cleared.
+    // Inputs: None.
+    // Outputs: Returns true if no notes remain, otherwise false.
     bool allNotesCleared() const {
         return nextNoteIndex >= chart.notes.size() && notes.empty();
     }
 
-    // ����Ƿ�Ӧ������Ϸ
+    // What it does: Determines whether gameplay should end.
+    // Inputs: None.
+    // Outputs: Returns true if game-over or chart end delay is complete, otherwise false.
     bool shouldEnd() const {
         return gameOver || (chartFinished && finishTimer >= FINISH_DELAY);
     }
 
+    // What it does: Updates game logic (time, spawn, movement, judgment, miss handling).
+    // Inputs: dt is delta time in seconds; input is frame key state.
+    // Outputs: None.
     void update(double dt, const Input& input) {
-        // ������Ϸʱ��
+        // Update gameplay time.
         gameTime += dt;
-        
-        // ��������ѽ������ۼƵ���ʱ
+
+        // Accumulate finish timer after chart clears.
         if (chartFinished) {
             finishTimer += dt;
         }
-        
-        // �����ж�������ʱ��
+
+        // Update judge feedback timer.
         if (feedback.timer > 0) {
             feedback.timer -= dt;
             if (feedback.timer <= 0) feedback.text = "";
         }
-        
-        // ���¹��������ʱ��
+
+        // Update lane flash timers.
         for (int i = 0; i < lanes; ++i) {
             if (laneHitTimer[i] > 0) laneHitTimer[i] -= dt;
         }
-        
-        // 1) ��������
+
+        // 1) Spawn notes.
         if (useChart) {
-            // ����ģʽ������ʱ����������
-            double spawnAheadTime = (judgeY / speedRowsPerSec); // ��ǰ����ʱ��
+            // Spawn notes in advance so they reach judge line at note time.
+            double spawnAheadTime = (judgeY / speedRowsPerSec);
 
             while (nextNoteIndex < chart.notes.size()) {
                 const auto& chartNote = chart.notes[nextNoteIndex];
                 double adjustedTime = chartNote.time + chart.offset;
 
-                // ����Ƿ񵽴�����ʱ��
+                // Spawn when spawn time is reached.
                 if (gameTime >= adjustedTime - spawnAheadTime) {
                     Note n;
                     n.lane = chartNote.lane;
@@ -290,27 +374,25 @@ struct Game {
                     break;
                 }
             }
-
-            // ע�⣺���׽��������������ѭ����������ֲ���״̬�ж�
         }
 
-        // 2) ����
+        // 2) Move notes.
         for (auto it = notes.begin(); it != notes.end(); ) {
             it->y += speedRowsPerSec * dt;
             ++it;
         }
 
-        // 3) �ж��������±��أ�
+        // 3) Judge input for each lane.
         for (int li = 0; li < lanes; ++li) {
             if (input.pressed(laneKeys[li])) {
-                laneHitTimer[li] = 0.15; // ���ù������ʱ��
-                
+                laneHitTimer[li] = 0.15;
+
                 int bestIdx = -1;
-                int bestDist = 1000000000; // �� 1e9 ��Ϊ���������������� double �� int ��ת������
+                int bestDist = 1000000000;
                 for (int i = 0; i < (int)notes.size(); ++i) {
                     auto& n = notes[i];
                     if (n.dead || n.lane != li) continue;
-                    int dist = (int)std::lround(n.y) - judgeY; // ��=�ѹ���
+                    int dist = (int)std::lround(n.y) - judgeY;
                     int ad = std::abs(dist);
                     if (ad < bestDist) { bestDist = ad; bestIdx = i; }
                 }
@@ -318,34 +400,36 @@ struct Game {
                     auto& n = notes[bestIdx];
                     int dist = (int)std::lround(n.y) - judgeY;
                     int ad = std::abs(dist);
+                    // Perfect timing hit
                     if (ad <= perfectWindow) {
                         score += 10; combo++; maxCombo = std::max(maxCombo, combo);
                         perfectCount++;
                         n.dead = true;
-                        // ��ʾ Perfect ����
+                        // Show Perfect feedback.
                         feedback.text = "PERFECT!";
                         feedback.lane = li;
                         feedback.timer = 0.5;
                         feedback.color = 1;
                     }
+                    // Good timing hit
                     else if (ad <= goodWindow) {
                         score += 5;  combo++; maxCombo = std::max(maxCombo, combo);
                         goodCount++;
                         n.dead = true;
-                        // ��ʾ Good ����
+                        // Show Good feedback.
                         feedback.text = "GOOD";
                         feedback.lane = li;
                         feedback.timer = 0.5;
                         feedback.color = 2;
                     }
                     else {
-                        // ƫ����󣬺��Ա��λ��򣨲��۷֣�
+                        // Missed the timing window
                     }
                 }
             }
         }
 
-        // 4) ��ʱ Miss
+        // 4) Handle misses.
         for (auto& n : notes) {
             if (!n.dead && n.y > judgeY + goodWindow + 1) {
                 n.dead = true;
@@ -353,7 +437,7 @@ struct Game {
                 missCount++;
                 life = std::max(0, life - 2);
                 if (life <= 0) gameOver = true;
-                // ��ʾ Miss ����
+                // Show Miss feedback.
                 feedback.text = "MISS";
                 feedback.lane = n.lane;
                 feedback.timer = 0.5;
@@ -361,16 +445,19 @@ struct Game {
             }
         }
 
-        // 5) ������������� erase-remove��
+        // 5) Remove dead/out-of-screen notes.
         notes.erase(std::remove_if(notes.begin(), notes.end(),
             [this](const Note& n) { return n.dead || n.y > (double)(H - 1); }),
             notes.end());
     }
 
+    // What it does: Renders full game UI and note field to terminal.
+    // Inputs: None.
+    // Outputs: None.
     void render() {
         term::moveHome();
 
-        // ���� HUD
+        // Render HUD.
         std::cout << "Console Rhythm 6L  |  ";
         if (useChart) {
             term::setBrightCyan();
@@ -382,8 +469,8 @@ struct Game {
             << score << "   Combo: " << combo
             << "   MaxCombo: " << maxCombo
             << "   Life: " << life << "\n";
-        
-        // �ж�ͳ����
+
+        // Judge statistics.
         term::setGreen();
         std::cout << "Perfect: " << perfectCount;
         term::resetColor();
@@ -395,8 +482,8 @@ struct Game {
         term::setRed();
         std::cout << "Miss: " << missCount;
         term::resetColor();
-        
-        // ���׽�������ʱ��ʾ
+
+        // Song-end countdown display.
         if (chartFinished) {
             std::cout << "    ";
             term::setYellow();
@@ -407,41 +494,39 @@ struct Game {
         }
         std::cout << "\n";
 
-        // ����
+        // Canvas.
         static std::vector<std::string> canvas;
         canvas.assign(H, std::string(W, ' '));
 
-        // �����������Ч����
+        // Lane lines and hit flash effects.
         for (int i = 0; i < lanes; ++i) {
             int x = laneX[i];
             for (int y = 1; y < H - 2; ++y) {
                 if (x >= 0 && x < W) {
-                    // �����������£�ʹ�������ַ�
                     canvas[y][x] = (laneHitTimer[i] > 0) ? '!' : '|';
                 }
             }
         }
 
-        // �ж���
+        // Judge line.
         if (judgeY >= 0 && judgeY < H) {
             for (int x = 0; x < W; ++x) canvas[judgeY][x] = '-';
         }
 
-        // ����
+        // Notes.
         for (auto& n : notes) {
             int x = laneX[n.lane];
             int y = (int)std::lround(n.y);
             if (y >= 0 && y < H && x >= 0 && x < W) {
-                canvas[y][x] = '@';  // ʹ�� @ ���ţ�������Ŀ
+                canvas[y][x] = '@';
             }
         }
-        
-        // �ж�������ʾ
+
+        // Judge feedback text.
         if (feedback.timer > 0 && feedback.lane >= 0 && feedback.lane < lanes) {
             int x = laneX[feedback.lane];
-            int y = judgeY - 3; // ���ж����Ϸ���ʾ
+            int y = judgeY - 3;
             if (y >= 0 && y < H) {
-                // ������λ����ʾ�ж�����
                 int textLen = (int)feedback.text.length();
                 int startX = std::max(0, x - textLen / 2);
                 for (int i = 0; i < textLen && startX + i < W; ++i) {
@@ -450,7 +535,7 @@ struct Game {
             }
         }
 
-        // ��λ��ʾ - ���뵽ÿ������·�
+        // Lane key labels.
         if (H - 2 >= 0 && H - 2 < (int)canvas.size()) {
             for (int i = 0; i < lanes; ++i) {
                 int x = laneX[i];
@@ -459,8 +544,8 @@ struct Game {
                 }
             }
         }
-        
-        // �˳���ʾ�������һ��
+
+        // Quit hint on the last line.
         if (H - 1 >= 0 && H - 1 < (int)canvas.size()) {
             std::string hint = "(Q=quit)";
             int startX = W - (int)hint.size() - 1;
@@ -470,23 +555,20 @@ struct Game {
                 }
             }
         }
-        
 
-        // ���
+        // Draw canvas.
         for (int y = 0; y < H; ++y) {
             for (int x = 0; x < (int)canvas[y].size(); ++x) {
                 char ch = canvas[y][x];
                 if (ch == '@') {
-                    term::setNoteStyle();  // ������Ŀ��������ʽ���������ף�
+                    term::setNoteStyle();
                     std::cout << ch;
-                    term::resetColor();      // ������ɫ
+                    term::resetColor();
                 } else if (ch == '!') {
-                    // �����Ĺ��
                     term::setBrightCyan();
                     std::cout << ch;
                     term::resetColor();
                 } else if (feedback.timer > 0 && y == judgeY - 3) {
-                    // �ж��������򣬸����ж�������ɫ
                     bool isJudgeText = false;
                     if (feedback.lane >= 0 && feedback.lane < lanes) {
                         int textX = laneX[feedback.lane];
@@ -496,11 +578,11 @@ struct Game {
                             isJudgeText = true;
                         }
                     }
-                    
+
                     if (isJudgeText) {
-                        if (feedback.color == 1) term::setGreen();      // Perfect
-                        else if (feedback.color == 2) term::setYellow(); // Good
-                        else if (feedback.color == 3) term::setRed();    // Miss
+                        if (feedback.color == 1) term::setGreen();
+                        else if (feedback.color == 2) term::setYellow();
+                        else if (feedback.color == 3) term::setRed();
                         std::cout << ch;
                         term::resetColor();
                     } else {
@@ -516,19 +598,21 @@ struct Game {
     }
 };
 
-// -------------------- ����ʱ���� --------------------
+// What it does: Displays pre-game countdown animation.
+// Inputs: None.
+// Outputs: None.
 void showCountdown() {
     const int countdown[] = {3, 2, 1};
-    
+
     for (int num : countdown) {
         term::clearScreen();
         term::moveHome();
-        
-        // ������Ļ����λ��
+
+        // Center position for countdown box.
         int centerRow = 14;
         int centerCol = 32;
-        
-        // ���ƴ������Ч��
+
+        // Draw countdown frame.
         term::moveTo(centerRow - 2, centerCol - 5);
         term::setYellow();
         std::cout << "+---------+";
@@ -541,25 +625,23 @@ void showCountdown() {
         std::cout << "|    " << num << "    |";
 
         term::moveTo(centerRow + 1, centerCol - 5);
-        term::setYellow();
         std::cout << "|         |";
 
         term::moveTo(centerRow + 2, centerCol - 5);
         std::cout << "+---------+";
-        
         term::resetColor();
         std::cout.flush();
-        
+
         std::this_thread::sleep_for(std::chrono::milliseconds(800));
     }
-    
-    // ��ʾ "GO!"
+
+    // Show "GO!".
     term::clearScreen();
     term::moveHome();
-    
+
     int centerRow = 14;
     int centerCol = 32;
-    
+
     term::moveTo(centerRow - 2, centerCol - 5);
     term::setGreen();
     std::cout << "+---------+";
@@ -575,88 +657,92 @@ void showCountdown() {
 
     term::moveTo(centerRow + 2, centerCol - 5);
     std::cout << "+---------+";
-    
+
     term::resetColor();
     std::cout.flush();
-    
+
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
 }
 
-// -------------------- ��Ϸ�������� --------------------
+// What it does: Displays post-game result panel with score and judge statistics.
+// Inputs: game is final game state to display.
+// Outputs: None.
 void showGameOver(const Game& game) {
     term::clearScreen();
     term::moveHome();
-    
+
     int centerRow = 10;
     int centerCol = 32;
-    
-    // ��ʾ GAME OVER
+
+    // Draw GAME OVER title box.
     term::moveTo(centerRow, centerCol - 10);
     term::setRed();
-    std::cout << "+--------------------+";
+    std::cout << "+--------------------+"; // Top border
 
     term::moveTo(centerRow + 1, centerCol - 10);
-    std::cout << "|                    |";
+    std::cout << "|                    |"; // Empty middle
 
     term::moveTo(centerRow + 2, centerCol - 10);
     term::setYellow();
-    std::cout << "|   GAME  OVER!      |";
+    std::cout << "|   GAME  OVER!      |"; // "GAME OVER" message
 
     term::moveTo(centerRow + 3, centerCol - 10);
     term::setRed();
-    std::cout << "|                    |";
+    std::cout << "|                    |"; // Empty middle
 
     term::moveTo(centerRow + 4, centerCol - 10);
-    std::cout << "+--------------------+";
-    
-    // ��ʾ����ͳ��
+    std::cout << "+--------------------+"; // Bottom border
+
+    // Show final statistics.
     term::moveTo(centerRow + 6, centerCol - 10);
     term::setBrightCyan();
     std::cout << "Final Score: " << game.score;
-    
+
     term::moveTo(centerRow + 7, centerCol - 10);
     std::cout << "Max Combo: " << game.maxCombo;
-    
+
     term::moveTo(centerRow + 9, centerCol - 10);
     term::setGreen();
     std::cout << "Perfect: " << game.perfectCount;
-    
+
     term::moveTo(centerRow + 10, centerCol - 10);
     term::setYellow();
     std::cout << "Good: " << game.goodCount;
-    
+
     term::moveTo(centerRow + 11, centerCol - 10);
     term::setRed();
     std::cout << "Miss: " << game.missCount;
-    
+
     term::moveTo(centerRow + 13, centerCol - 10);
     term::resetColor();
     std::cout << "Thanks for playing!";
-    
+
     term::resetColor();
     std::cout.flush();
-    
+
     std::this_thread::sleep_for(std::chrono::milliseconds(5000));
 }
 
-// -------------------- ������ --------------------
+// What it does: Runs the core rhythm game (stage select, gameplay loop, and result screen).
+// Inputs: None.
+// Outputs: Returns final score achieved in this run.
 int startMusicGameInternal() {
     std::srand((unsigned)std::time(nullptr));
 
 #if defined(_WIN32)
-    term::enableVT(); // �������� ANSI
+    term::enableVT(); // Enable ANSI VT processing.
 #else
-    term::TermiosGuard tg; // ���� raw ģʽ���˳��Զ��ָ�
+    term::TermiosGuard tg; // Enable raw mode and restore automatically on exit.
 #endif
 
     term::hideCursor();
     term::clearScreen();
     term::moveHome();
-    
+
     Game game;
-    // ʹ��ȫ�� MusicManager������Ҫ�ֲ� musicPlayer
-    
-    // -------- �ؿ�ģʽ --------
+    // Use global MusicManager and do not create a local music player.
+
+    // Stage-selection mode.
     const Stage* selected = nullptr;
     while (!selected) {
         term::clearScreen();
@@ -686,11 +772,11 @@ int startMusicGameInternal() {
         std::cout << "Enter stage number: ";
         term::resetColor();
 
-        // Flush stdin buffer to throw away any stray keys left over from previous state
+        // Flush stdin to discard leftover keys from previous state.
 #if defined(_WIN32)
         while (_kbhit()) _getch();
 #else
-        // �� Linux �¶������в����ı�׼���뻺�壬�Է�֮ǰ�Ĳ�����������
+        // On Linux, non-blocking clear stdin buffer to avoid stale keystrokes.
         {
             int oldf = fcntl(STDIN_FILENO, F_GETFL, 0);
             fcntl(STDIN_FILENO, F_SETFL, oldf | O_NONBLOCK);
@@ -717,7 +803,7 @@ int startMusicGameInternal() {
 
         std::cout << stageInput << "\n" << std::flush;
 
-        // ���Ҷ�Ӧ�ؿ�
+        // Find selected stage.
         for (const auto& s : stages) {
             if (s.id == stageInput) { selected = &s; break; }
         }
@@ -727,7 +813,7 @@ int startMusicGameInternal() {
             std::cout << "\nLoading stage: " << selected->singer << " - " << selected->music << "\n";
             term::resetColor();
 
-            // �Զ���������
+            // Auto-load chart.
             if (!game.loadChart(selected->chartPath)) {
                 term::setRed();
                 std::cout << "? Failed to load chart: " << selected->chartPath << "\n";
@@ -740,7 +826,7 @@ int startMusicGameInternal() {
                 std::cout << "? Chart loaded  (" << game.chart.notes.size() << " notes, BPM " << game.chart.bpm << ")\n";
                 term::resetColor();
 
-                // �Զ��������֣�ʹ�� MusicManager��
+                // Auto-load music using MusicManager.
                 MusicManager::stop();
                 if (MusicManager::getPlayer().load(selected->musicPath)) {
                     term::setGreen();
@@ -766,15 +852,15 @@ int startMusicGameInternal() {
     term::hideCursor();
     term::clearScreen();
 
-    // ��ʾ����ʱ
+    // Show countdown.
     showCountdown();
 
-    // ����ʱ������ʼ��������
+    // Start music when countdown ends.
     MusicManager::getPlayer().play();
 
     Input input;
 
-    // �̶��߼����� 120Hz����Ⱦ ~60FPS
+    // Fixed-step logic: 120Hz update, ~60FPS render.
     const double dt = 1.0 / 120.0;
     auto now = []() { return std::chrono::steady_clock::now(); };
     auto prev = now();
@@ -789,7 +875,7 @@ int startMusicGameInternal() {
         acc += frame;
         renderAcc += frame;
 
-        // ���루��������
+        // Read and accumulate input this frame.
         Input tempInput;
         pollInput(tempInput);
         for (int i = 0; i < 256; ++i) {
@@ -797,16 +883,16 @@ int startMusicGameInternal() {
         }
         if (input.pressed('Q')) running = false;
 
-        // �߼��ಽ����
+        // Fixed-step logic update.
         while (acc >= dt) {
             game.update(dt, input);
             input.clear();
             acc -= dt;
         }
-        
-        // 曲谱模式：音符清除后等待 FINISH_DELAY 退出
+
+        // Chart mode: exit after all notes are cleared and FINISH_DELAY passes.
         if (game.useChart) {
-            // 音符全部清除后等待一定时间就退出（不依赖音乐是否播放完成）
+            // Exit after notes are cleared for a short delay (independent of audio playback end).
             if (!game.chartFinished && game.allNotesCleared()) {
                 game.chartFinished = true;
                 game.finishTimer = 0.0;
@@ -816,7 +902,7 @@ int startMusicGameInternal() {
             }
         }
 
-        // ��Ⱦ��Լ 60 FPS��
+        // Render at about 60 FPS.
         if (renderAcc >= (1.0 / 60.0)) {
             game.render();
             renderAcc = 0.0;
@@ -825,17 +911,17 @@ int startMusicGameInternal() {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
-    // ֹͣ��ǰ���֣�����ʱ���Զ����ű�������
+    // Stop current music to avoid leaking into outer scenes.
     MusicManager::stop();
 
-    // ��ʾ��Ϸ��������
+    // Show final result screen.
     showGameOver(game);
-    
+
     term::resetColor();
     term::showCursor();
     term::clearScreen();
     term::moveHome();
-    
-    // �������շ���
+
+    // Return final score.
     return game.score;
 }
