@@ -1,5 +1,5 @@
 #include "MusicManager.h"
 
-// 静态成员定义
+// Defines static class members.
 MusicPlayer MusicManager::player;
 bool MusicManager::initialized = false;
