@@ -7,20 +7,26 @@ private:
     static bool initialized;
 
 public:
-    // 初始化音频系统
+    // What it does: Initializes the shared audio manager state.
+    // Inputs: None.
+    // Outputs: None.
     static void initialize() {
         if (!initialized) {
-            // MusicPlayer 构造函数会自动初始化
+            // MusicPlayer constructor initializes the underlying engine.
             initialized = true;
         }
     }
 
-    // 获取 MusicPlayer 引用
+    // What it does: Returns access to the shared MusicPlayer instance.
+    // Inputs: None.
+    // Outputs: Returns a mutable reference to the global MusicPlayer.
     static MusicPlayer& getPlayer() {
         return player;
     }
 
-    // 播放背景音乐（自动停止当前音乐）
+    // What it does: Stops current playback, loads a new background track, and starts playback.
+    // Inputs: filepath is the audio file path to load.
+    // Outputs: Returns true if loading and playback both succeed, otherwise false.
     static bool playBackgroundMusic(const std::string& filepath) {
         player.stop();
         if (player.load(filepath)) {
@@ -29,38 +35,53 @@ public:
         return false;
     }
 
-    // 停止音乐
+    // What it does: Stops the current track and resets playback position.
+    // Inputs: None.
+    // Outputs: None.
     static void stop() {
         player.stop();
     }
 
-    // 暂停音乐
+    // What it does: Pauses current playback.
+    // Inputs: None.
+    // Outputs: None.
     static void pause() {
         player.pause();
     }
 
-    // 恢复播放
+    // What it does: Resumes playback of the currently loaded track.
+    // Inputs: None.
+    // Outputs: Returns true if playback starts successfully, otherwise false.
     static bool resume() {
         return player.play();
     }
 
-    // 设置音量
+    // What it does: Sets playback volume.
+    // Inputs: volume is expected in the project range used by MusicPlayer.
+    // Outputs: None.
     static void setVolume(int volume) {
         player.setVolume(volume);
     }
 
-    // 清理资源
+    // What it does: Stops playback as part of audio cleanup flow.
+    // Inputs: None.
+    // Outputs: None.
     static void cleanup() {
         player.stop();
     }
 
-    // 检查是否在播放
+    // What it does: Reports whether audio is currently playing.
+    // Inputs: None.
+    // Outputs: Returns true if playing, otherwise false.
     static bool isPlaying() {
         return player.getIsPlaying();
     }
 
-    // 检查是否播放完成
+    // What it does: Reports whether playback is considered finished.
+    // Inputs: None.
+    // Outputs: Returns true if finished, otherwise false.
     static bool isFinished() {
         return player.isFinished();
     }
 };
+
