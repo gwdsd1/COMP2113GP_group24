@@ -1,14 +1,17 @@
 #include "game.h"
 #include "MusicManager.h"
 
+// What it does: Initializes audio, runs the main menu loop, and performs cleanup before process exit.
+// Inputs: None.
+// Outputs: Returns process exit code 0 on normal completion.
 int main() {
-    // 初始化音频系统
+    // Initialize the audio system.
     MusicManager::initialize();
 
-    // 显示主菜单
+    // Show the main menu.
     showMainMenu();
 
-    // 清理音频资源
+    // Release audio resources.
     MusicManager::cleanup();
 
     return 0;
