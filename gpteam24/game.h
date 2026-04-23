@@ -1,16 +1,24 @@
 #ifndef GAME_H
 #define GAME_H
 
-// 显示游戏主菜单
+// What it does: Displays the game main menu and routes the user to selected actions.
+// Inputs: None.
+// Outputs: None.
 void showMainMenu();
 
-// 新游戏
+// What it does: Starts a brand-new game session.
+// Inputs: None.
+// Outputs: None.
 void newGame();
 
-// 载入游戏
+// What it does: Loads a saved game and starts the maze using saved state.
+// Inputs: None.
+// Outputs: None.
 void loadGame();
 
-// 退出游戏
+// What it does: Performs game quit flow and prints exit message.
+// Inputs: None.
+// Outputs: None.
 void quitGame();
 
 #endif // GAME_H
