@@ -20,9 +20,12 @@
 #include <fcntl.h>
 #endif
 
-// ========== 贪吃蛇专用控制台工具 ==========
+// Snake-specific cross-platform console utilities.
 namespace snake_con {
 
+// What it does: Sets terminal text color by game-specific color code.
+// Inputs: code is the color ID.
+// Outputs: None.
 inline void setColor(int code) {
 #if defined(_WIN32)
     HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -46,6 +49,9 @@ inline void setColor(int code) {
 #endif
 }
 
+// What it does: Moves terminal cursor to x/y position.
+// Inputs: x is column index; y is row index.
+// Outputs: None.
 inline void setPos(int x, int y) {
 #if defined(_WIN32)
     COORD p = {(short)x, (short)y};
@@ -55,6 +61,9 @@ inline void setPos(int x, int y) {
 #endif
 }
 
+// What it does: Clears terminal screen.
+// Inputs: None.
+// Outputs: None.
 inline void clear() {
 #if defined(_WIN32)
     system("cls");
@@ -63,6 +72,9 @@ inline void clear() {
 #endif
 }
 
+// What it does: Polls latest keyboard input and maps arrows to WASD.
+// Inputs: None.
+// Outputs: Returns latest key character, or 0 if no input is available.
 inline char getInput() {
     char last = 0;
 #if defined(_WIN32)
@@ -93,8 +105,19 @@ inline char getInput() {
     return last;
 }
 
+// What it does: Drains pending input.
+// Inputs: None.
+// Outputs: None.
 inline void clearInput() { getInput(); }
+
+// What it does: Flushes stdout to force immediate terminal rendering.
+// Inputs: None.
+// Outputs: None.
 inline void flush() { std::cout.flush(); }
+
+// What it does: Sleeps for specified milliseconds.
+// Inputs: ms is sleep duration.
+// Outputs: None.
 inline void sleepMs(int ms) {
     std::this_thread::sleep_for(std::chrono::milliseconds(ms));
 }
@@ -104,6 +127,10 @@ struct TermGuard {
     termios orig{};
     int flags = 0;
     bool ok = false;
+
+    // What it does: Enables raw non-blocking terminal mode on Linux.
+    // Inputs: None.
+    // Outputs: Constructs guard and applies terminal settings when possible.
     TermGuard() {
         if (!isatty(STDIN_FILENO)) return;
         tcgetattr(STDIN_FILENO, &orig);
@@ -116,6 +143,10 @@ struct TermGuard {
         fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK);
         ok = true;
     }
+
+    // What it does: Restores original Linux terminal settings.
+    // Inputs: None.
+    // Outputs: None.
     ~TermGuard() {
         if (ok) {
             tcsetattr(STDIN_FILENO, TCSANOW, &orig);
@@ -127,20 +158,26 @@ struct TermGuard {
 
 } // namespace snake_con
 
-// ========== 游戏常量 ==========
+// Game constants.
 static const int BW  = 42;
 static const int BH  = 22;
 static const int HDR = 2;
-static const int TARGET_SCORE = 150;   // ← 新增：目标分数
+static const int TARGET_SCORE = 150;   // Target score to pass.
 
 struct SC { int x, y; };
 
+// What it does: Checks whether a coordinate overlaps snake body.
+// Inputs: s is snake body deque; x and y are target coordinates.
+// Outputs: Returns true if coordinate is on snake body, otherwise false.
 static bool onBody(const std::deque<SC>& s, int x, int y) {
     for (auto& c : s)
         if (c.x == x && c.y == y) return true;
     return false;
 }
 
+// What it does: Generates a random free cell not occupied by snake or provided occupied cells.
+// Inputs: s is snake body; occ is a list of additional occupied coordinates.
+// Outputs: Returns a valid free coordinate, or fallback {1,1} if attempts fail.
 static SC randFree(const std::deque<SC>& s, const std::vector<SC>& occ) {
     SC p;
     for (int att = 0; att < 8000; ++att) {
@@ -155,17 +192,19 @@ static SC randFree(const std::deque<SC>& s, const std::vector<SC>& occ) {
     return {1, 1};
 }
 
-// ========== 底部状态栏绘制 ==========                           // ← 新增函数
+// What it does: Draws bottom status bar (score and speed state).
+// Inputs: score is current score; boosted indicates whether speed boost is active.
+// Outputs: None.
 static void drawStatusBar(int score, bool boosted) {
     using namespace snake_con;
 
-    // 第一行：分数和目标
+    // First row: score and target.
     setPos(0, BH + HDR);
     setColor(2);
     std::cout << " Score: " << score << " / " << TARGET_SCORE << "    ";
     setColor(0);
 
-    // 第二行：加速提示（如果有的话）
+    // Second row: speed boost hint.
     setPos(0, BH + HDR + 1);
     if (boosted) {
         setColor(5);
@@ -176,11 +215,14 @@ static void drawStatusBar(int score, bool boosted) {
     }
 }
 
-// ========== 全量绘制 ==========
+// What it does: Fully redraws the snake board, entities, and status UI.
+// Inputs: snake is snake body; food is food position; poisonOn/poison control poison item;
+//         speedOn/speedPot control speed item; score is current score; boosted is boost flag.
+// Outputs: None.
 static void fullDraw(const std::deque<SC>& snake, const SC& food,
                      bool poisonOn, const SC& poison,
                      bool speedOn,  const SC& speedPot,
-                     int score, bool boosted) {                    // ← 加了 boosted 参数
+                     int score, bool boosted) {
     using namespace snake_con;
     clear();
     setPos(0, 0);
@@ -216,11 +258,13 @@ static void fullDraw(const std::deque<SC>& snake, const SC& food,
         setColor(5); std::cout << '^'; setColor(0);
     }
 
-    drawStatusBar(score, boosted);                                // ← 新增
+    drawStatusBar(score, boosted);
     flush();
 }
 
-// ==================== 主入口 ====================
+// What it does: Runs the snake mini-game loop and returns whether target score is reached.
+// Inputs: None.
+// Outputs: Returns true if player reaches TARGET_SCORE, otherwise false.
 bool startSnakeGame() {
     using namespace snake_con;
 
@@ -230,11 +274,30 @@ bool startSnakeGame() {
     TermGuard tg;
 #endif
 
-    // ==================== 文字介绍过渡 ====================
+    // Difficulty selection.
+    clear();
+    clearInput();
+    std::cout << "\n\n      Choose Difficulty\n";
+    std::cout << "      [1] Easy   (1.0x speed)\n";
+    std::cout << "      [2] Medium (1.5x speed)\n";
+    std::cout << "      [3] Hard   (2.0x speed)\n\n";
+    std::cout << "      Press 1 / 2 / 3...\n";
+    flush();
+
+    double speedMultiplier = 1.0;
+    while (true) {
+        char dk = getInput();
+        if (dk == '1') { speedMultiplier = 1.0; break; }
+        if (dk == '2') { speedMultiplier = 1.5; break; }
+        if (dk == '3') { speedMultiplier = 2.0; break; }
+        sleepMs(16);
+    }
+
+    // Intro transition text.
     clear();
     clearInput();
 
-    // 模拟 Moodle 提交成功页面
+    // Simulate a Moodle submission success page.
     std::cout << "\x1b[92m";
     std::cout << "\n\n";
     std::cout << "  Your assignment submission for\n";
@@ -260,7 +323,7 @@ bool startSnakeGame() {
     flush();
     sleepMs(2500);
 
-    // 倒计时
+    // Countdown.
     for (int i = 3; i >= 1; --i) {
         clear();
         std::cout << "\x1b[93m\n\n\n\t\t\t" << i << "\x1b[0m\n";
@@ -289,9 +352,9 @@ bool startSnakeGame() {
     int score = 0;
     int eatCnt = 0;
     bool alive = true;
-    bool won   = false;                                           // ← 新增：是否达成目标
+    bool won   = false;  // Whether target score is reached.
 
-    const int BASE_MS = 150;
+    const int BASE_MS = static_cast<int>(150.0 / speedMultiplier);
     int  curDelay = BASE_MS;
     bool boosted  = false;
     auto boostEnd = std::chrono::steady_clock::now();
@@ -305,17 +368,17 @@ bool startSnakeGame() {
     fullDraw(snake, food, poisonOn, poison, speedOn, speedPot, score, boosted);
     clearInput();
 
-    // =====================  游戏主循环  =====================
+    // Main game loop.
     while (alive) {
 
-        // --- 检查加速是否到期 ---
+        // Check whether speed boost has expired.
         if (boosted && std::chrono::steady_clock::now() >= boostEnd) {
             boosted  = false;
             curDelay = BASE_MS;
-            drawStatusBar(score, boosted);                        // ← 改用 drawStatusBar
+            drawStatusBar(score, boosted);
         }
 
-        // --- 读取输入 ---
+        // Read input.
         char k = getInput();
         if (k == 'Q') { alive = false; break; }
         if (k == 'W' && dir != 1) dir = 3;
@@ -323,7 +386,7 @@ bool startSnakeGame() {
         else if (k == 'A' && dir != 0) dir = 2;
         else if (k == 'D' && dir != 2) dir = 0;
 
-        // --- 计算新蛇头 ---
+        // Compute next head position.
         SC nh = snake.front();
         switch (dir) {
             case 0: nh.x++; break;
@@ -332,13 +395,13 @@ bool startSnakeGame() {
             case 3: nh.y--; break;
         }
 
-        // --- 撞墙检测 ---
+        // Wall collision check.
         if (nh.x <= 0 || nh.x >= BW - 1 || nh.y <= 0 || nh.y >= BH - 1) break;
 
-        // --- 撞自己检测 ---
+        // Self collision check.
         if (onBody(snake, nh.x, nh.y)) break;
 
-        // --- 移动蛇 ---
+        // Move snake.
         snake.push_front(nh);
 
         bool ateFood   = (nh.x == food.x     && nh.y == food.y);
@@ -349,7 +412,7 @@ bool startSnakeGame() {
             score += 10;
             eatCnt++;
 
-            // ---- 检查是否达到目标分数 ----                      // ← 新增
+            // Check if target score is reached.
             if (score >= TARGET_SCORE) {
                 won = true;
                 alive = false;
@@ -413,26 +476,26 @@ bool startSnakeGame() {
             setColor(1); std::cout << 'o'; setColor(0);
         }
 
-        // ---- 更新底部状态栏 ----                               // ← 改用 drawStatusBar
+        // Update bottom status bar.
         drawStatusBar(score, boosted);
 
         flush();
         sleepMs(curDelay);
     }
 
-    // =====================  游戏结束  =====================      // ← 整段重写
+    // End screen.
     clear();
     std::cout << "\n\n";
 
     if (won) {
-        // 达成目标
+        // Target reached.
         std::cout << "    ==========================================\n";
         std::cout << "       M I S S I O N   A C C O M P L I S H E D\n";
         std::cout << "       Final Score : " << score << " / " << TARGET_SCORE << "\n";
         std::cout << "    ==========================================\n\n";
         std::cout << "    Returning to maze...\n";
     } else {
-        // 死亡或主动退出
+        // Died or quit.
         std::cout << "    ================================\n";
         std::cout << "          G A M E   O V E R\n";
         std::cout << "       Final Score : " << score << " / " << TARGET_SCORE << "\n";
@@ -442,8 +505,9 @@ bool startSnakeGame() {
 
     flush();
     clearInput();
-    sleepMs(2000);      // ← 停留2秒后自动返回迷宫，不再等按键
+    sleepMs(2000); // Stay for 2 seconds, then return to maze automatically.
     clearInput();
-    
+
     return won;
 }
+
