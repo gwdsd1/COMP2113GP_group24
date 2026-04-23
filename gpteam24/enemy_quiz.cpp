@@ -21,6 +21,9 @@
 using namespace std;
 
 namespace quiz_console {
+    // What it does: Clears the terminal screen.
+    // Inputs: None.
+    // Outputs: None.
     inline void clear() {
 #if defined(_WIN32)
         system("cls");
@@ -29,10 +32,16 @@ namespace quiz_console {
 #endif
     }
 
+    // What it does: Sleeps for a specified duration in milliseconds.
+    // Inputs: ms is the sleep duration in milliseconds.
+    // Outputs: None.
     inline void sleepMs(int ms) {
         std::this_thread::sleep_for(std::chrono::milliseconds(ms));
     }
 
+    // What it does: Reads latest keyboard input in non-blocking mode and normalizes letters to uppercase.
+    // Inputs: None.
+    // Outputs: Returns the latest detected key character, or 0 if no valid key is found.
     inline char getInput() {
         char lastChar = 0;
 #if defined(_WIN32)
@@ -58,7 +67,9 @@ namespace quiz_console {
         return lastChar;
     }
 
-    // 清空残留输入，避免刚进入问答时自动选中第一题答案
+    // What it does: Flushes pending input to avoid accidental key carryover.
+    // Inputs: None.
+    // Outputs: None.
     inline void clearInputBuffer() {
         getInput();
     }
@@ -69,6 +80,9 @@ namespace quiz_console {
         bool active = false;
         int origFlags = 0;
 
+        // What it does: Enables raw non-blocking terminal mode for quiz input.
+        // Inputs: None.
+        // Outputs: Constructs a guard that applies terminal settings.
         LinuxTermGuard() {
             if (!isatty(STDIN_FILENO)) return;
 
@@ -84,6 +98,9 @@ namespace quiz_console {
             active = true;
         }
 
+        // What it does: Restores original terminal mode when guard is destroyed.
+        // Inputs: None.
+        // Outputs: None.
         ~LinuxTermGuard() {
             if (active) {
                 tcsetattr(STDIN_FILENO, TCSANOW, &orig);
@@ -103,27 +120,30 @@ struct QuizQuestion {
     char answer;
 };
 
-// 开场剧情：老师突然出现并开始 cold-call
+// What it does: Shows the intro narrative before the quiz starts.
+// Inputs: None.
+// Outputs: None.
 static void showIntro() {
     quiz_console::clear();
     cout << "A professor suddenly appears from nowhere.\n";
     cout << "\"Leaving already?\" they ask.\n";
     cout << "\"Not until you answer a few questions.\"\n";
 
- 
+
     quiz_console::sleepMs(4000);
 
 
     quiz_console::clearInputBuffer();
 }
 
+// What it does: Displays one question, waits for A/B/C/D input, and returns correctness.
+// Inputs: q is the question data; index is current question number; total is total questions.
+// Outputs: Returns true if the selected answer is correct, otherwise false.
 static bool askOneQuestion(const QuizQuestion& q, int index, int total) {
-   
     quiz_console::clearInputBuffer();
 
-    // 只在进入题目时清屏并绘制一次
+    // Clear and render once when entering this question.
     quiz_console::clear();
-
     cout << "=== Escape Trial: Main Building ===\n";
     cout << "Question " << index << " / " << total << "\n\n";
     cout << q.question << "\n\n";
@@ -133,7 +153,7 @@ static bool askOneQuestion(const QuizQuestion& q, int index, int total) {
     cout << "D. " << q.D << "\n\n";
     cout << "Press A / B / C / D\n";
 
-   
+
     while (true) {
         char in = quiz_console::getInput();
 
@@ -156,6 +176,9 @@ static bool askOneQuestion(const QuizQuestion& q, int index, int total) {
     }
 }
 
+// What it does: Runs the enemy quiz mini-game and returns pass/fail result.
+// Inputs: None.
+// Outputs: Returns true if the player answers at least 2 of 3 questions correctly; otherwise false.
 bool startEnemyQuiz() {
 #if !defined(_WIN32)
     quiz_console::LinuxTermGuard termGuard;
@@ -163,7 +186,7 @@ bool startEnemyQuiz() {
 
     showIntro();
 
-    // 10 道题，每次随机抽 3 道
+    // Question bank: randomly select 3 questions from 10.
     vector<QuizQuestion> bank = {
     {
         "What is the special ability of a group project?",
