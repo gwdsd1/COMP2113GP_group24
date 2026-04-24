@@ -575,9 +575,10 @@ void showVictoryScreen() {
     std::cout << "    ****************************************************\n\n";
     std::cout << "         C O N G R A T U L A T I O N S ! ! !\n\n";
     std::cout << "    ****************************************************\n\n";
-    std::cout << "       You have successfully escaped the maze!\n";
-    std::cout << "       After countless challenges and adventures,\n";
-    std::cout << "       you have proven yourself to be a true hero.\n\n";
+    std::cout << "       Successfully get out from\n";
+    std::cout << "       THE MAIN BUILDING\n";
+    std::cout << "       After countless time of hardwork,\n";
+    std::cout << "       you have proven yourself to be good student!\n\n";
     std::cout << "       Thank you for playing our game!\n\n";
     std::cout << "    ****************************************************\n\n";
     std::cout << "\n\n         Press Enter to return to main menu...";
@@ -599,8 +600,8 @@ void showGameOverScreen() {
     std::cout << "              G A M E   O V E R\n\n";
     std::cout << "    ****************************************************\n\n";
     std::cout << "       Your health has run out...\n";
-    std::cout << "       The challenges of the maze proved too much.\n";
-    std::cout << "       But don't give up - try again!\n\n";
+    std::cout << "       It seems you need to spend more time studying...\n";
+    std::cout << "       Don't give up - try again!\n\n";
     std::cout << "    ****************************************************\n\n";
     std::cout << "\n\n         Press Enter to return to main menu...";
     std::cout.flush();
@@ -633,6 +634,16 @@ void displayHealth(const MazeState& state, int MAZE_HEIGHT) {
     }
     cout << "          ";   // Clear remaining characters.
     cout.flush();
+}
+
+// What it does: Restores maze console rendering state after leaving sub-screens or mini-games.
+// Inputs: None.
+// Outputs: None.
+void restoreMazeConsole() {
+    console::clear();
+    console::hideCursor();
+    console::setPos(0, 0);
+    console::clearInputBuffer();
 }
 
 // What it does: Waits for one raw key input and returns uppercase printable key.
@@ -996,6 +1007,9 @@ void startMaze(MazeState& state, bool useSavedState) {
                          isBlockedByOtherEnemies(state, shooterX[i], shooterY[i], -1));
             }
 
+            restoreMazeConsole();
+            drawMazeFrame(state, maze, MAZE_WIDTH, MAZE_HEIGHT, nearNote);
+            displayHealth(state, MAZE_HEIGHT);
             console::clearInputBuffer();
             continue;
         }
@@ -1051,6 +1065,9 @@ void startMaze(MazeState& state, bool useSavedState) {
                          isBlockedByOtherEnemies(state, snakeX[i], snakeY[i], -1));
             }
 
+            restoreMazeConsole();
+            drawMazeFrame(state, maze, MAZE_WIDTH, MAZE_HEIGHT, nearNote);
+            displayHealth(state, MAZE_HEIGHT);
             console::clearInputBuffer();
             continue;
         }
@@ -1097,8 +1114,7 @@ void startMaze(MazeState& state, bool useSavedState) {
         // Shop.
         if (doShop) {
             showShop(state);
-            console::clear();
-            console::hideCursor();
+            restoreMazeConsole();
             drawMazeFrame(state, maze, MAZE_WIDTH, MAZE_HEIGHT, nearNote);
             displayHealth(state, MAZE_HEIGHT);
             console::clearInputBuffer();
@@ -1152,6 +1168,9 @@ void startMaze(MazeState& state, bool useSavedState) {
                          isBlockedByOtherEnemies(state, noteX[i], noteY[i], -1));
             }
 
+            restoreMazeConsole();
+            drawMazeFrame(state, maze, MAZE_WIDTH, MAZE_HEIGHT, nearNote);
+            displayHealth(state, MAZE_HEIGHT);
             console::clearInputBuffer();
             continue;
         }

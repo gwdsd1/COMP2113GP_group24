@@ -126,7 +126,9 @@ struct QuizQuestion {
 static void showIntro() {
     quiz_console::clear();
     cout << "A professor suddenly appears from nowhere.\n";
+    cout << "\n";
     cout << "\"Leaving already?\" they ask.\n";
+    cout << "\n";
     cout << "\"Not until you answer a few questions.\"\n";
 
 
