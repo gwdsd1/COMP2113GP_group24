@@ -12,7 +12,7 @@
 |----------------|------------|-----------------|
 | WANG Zhengwei  | 3036483777 | gwdsd1          |
 | SU Yihan       | 3036482670 | fdhyng          |
-| ZHENG Jianbin  |            | jbin17          |
+| ZHENG Jianbin  | 3036483284 | jbin17          |
 | LUO Zihan      | 3036482589 | TTNKBDR0426     |
 
 ---
