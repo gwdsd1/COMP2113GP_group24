@@ -5,6 +5,36 @@
 **Repository:** `gwdsd1/COMP2113GP_group24`
 
 ---
+## Table of Contents
+- [Team Members](#team-members)
+- [Game Description](#game-description)
+- [Compilation and Execution Instructions (Quick Start)](#compilation-and-execution-instructions-quick-start)
+  - [Manual compilation (g++17)](#manual-compilation-g17)
+- [Controls & Key Bindings (Detailed)](#controls--key-bindings-detailed)
+  - [1) Main Menu](#1-main-menu)
+  - [2) Maze (Core Gameplay)](#2-maze-core-gameplay)
+  - [3) Shop System (Coins → Items)](#3-shop-system-coins--items)
+  - [4) Wall Breaker Tool (Detailed)](#4-wall-breaker-tool-detailed)
+- [Mini-Games / Encounters](#mini-games--encounters)
+  - [A) Shooter Mini-game (Entrance `!`)](#a-shooter-mini-game-entrance-)
+  - [B) Snake Mini-game (Entrance `S`) — Multiple Difficulty Levels Required Feature](#b-snake-mini-game-entrance-s--multiple-difficulty-levels-required-feature)
+  - [C) Music / Rhythm Mini-game (Entrance `&`)](#c-music--rhythm-mini-game-entrance-)
+  - [D) Enemy Quiz Encounter (Enemy `G`)](#d-enemy-quiz-encounter-enemy-g)
+- [Save / Load System](#save--load-system)
+  - [Save](#save)
+  - [Load](#load)
+- [Implemented Features and COMP2113 Coding Requirements Mapping](#implemented-features-and-comp2113-coding-requirements-mapping)
+  - [(1) Generation of Random Events](#1-generation-of-random-events)
+  - [(2) Data Structures for Storing Data](#2-data-structures-for-storing-data)
+  - [(3) Dynamic Memory Management](#3-dynamic-memory-management)
+  - [(4) File Input/Output](#4-file-inputoutput)
+  - [(5) Program Codes in Multiple Files](#5-program-codes-in-multiple-files)
+- [Non-standard / Third-party Libraries](#non-standard--third-party-libraries)
+  - [miniaudio (`miniaudio.h`)](#miniaudio-miniaudioh)
+- [Folder Structure (Important)](#folder-structure-important)
+- [License](#license)
+
+---
 
 ## Team Members
 
