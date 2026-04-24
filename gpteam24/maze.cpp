@@ -485,7 +485,7 @@ bool loadMazeStateFromFile(const string& filename, MazeState& state) {
 // Outputs: None.
 void drawMazeFrame(const MazeState& state, const string maze[], int W, int H, bool nearNote) {
     console::setPos(0, 0);
-    cout << "Use W/A/S/D to move. Press Q to quit maze. P:Shop. Press O to quit shop.";
+    cout << "Use W/A/S/D to move. Press Q to quit maze. P:Shop. Press K to quit shop.";
     if (state.wallBreakers > 0) cout << " Press B to BreakWall";
     if (nearNote) cout << "  Press E to interact.";
     else cout << "                        ";
