@@ -9,6 +9,7 @@
 #include <thread>
 #include <string>
 #include <algorithm>
+#include <cctype>
 
 #if defined(_WIN32)
 #define NOMINMAX
@@ -96,8 +97,11 @@ inline char getInput() {
                     case 'D': last = 'A'; break;
                 }
                 i += 2;
-            } else if (isalpha(buf[i])) {
-                last = (char)std::toupper(buf[i]);
+            } else {
+                unsigned char uc = static_cast<unsigned char>(buf[i]);
+                if (std::isalnum(uc)) {
+                    last = static_cast<char>(std::toupper(uc));
+                }
             }
         }
     }
