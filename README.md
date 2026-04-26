@@ -2,7 +2,8 @@
 
 **Course:** HKU COMP2113 / COMP1340  
 **Team:** Group 24  
-**Repository:** `gwdsd1/COMP2113GP_group24`
+**Repository:** `gwdsd1/COMP2113GP_group24`  
+**Link to the demo video:** [Project Demo Video](https://youtu.be/VQ8KWEw4Q9Y)
 
 ---
 ## Table of Contents
