@@ -954,6 +954,11 @@ void startMaze(MazeState& state, bool useSavedState) {
     const int ENEMY_MOVE_INTERVAL = 5;
     int enemyTick = 0;
     console::clearInputBuffer();
+#if !defined(_WIN32)
+    char lastMoveKey = 0;
+    auto lastMoveTime = std::chrono::steady_clock::now();
+    const auto MOVE_HOLD_MS = std::chrono::milliseconds(20);
+#endif
 
     while (inMaze) {
         // Auto-enter shooter mini-game when player is close to shooter entrance.
@@ -1101,6 +1106,17 @@ void startMaze(MazeState& state, bool useSavedState) {
         console::clearInputBuffer();
 #else
         char inKey = console::getInput();
+        auto now = std::chrono::steady_clock::now();
+        if (inKey == 'W' || inKey == 'A' || inKey == 'S' || inKey == 'D') {
+            lastMoveKey = inKey;
+            lastMoveTime = now;
+        } else if (inKey == 0 && lastMoveKey != 0) {
+            if (now - lastMoveTime < MOVE_HOLD_MS) {
+                inKey = lastMoveKey;
+            } else {
+                lastMoveKey = 0;
+            }
+        }
         if (inKey == 'W') { nextY--; tryMove = true; }
         else if (inKey == 'S') { nextY++; tryMove = true; }
         else if (inKey == 'A') { nextX--; tryMove = true; }

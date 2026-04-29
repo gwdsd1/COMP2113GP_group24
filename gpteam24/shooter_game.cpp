@@ -207,7 +207,7 @@ bool startShooterGame() {
         char inKey = shooter_console::getInput();
         if (inKey == 'W' || inKey == 'A' || inKey == 'S' || inKey == 'D') {
             linuxLastDir = inKey;
-            linuxDirKeepAlive = 15;
+            linuxDirKeepAlive = 10;
         } else if (inKey != 0) {
             linuxLastDir = 0;
         }
