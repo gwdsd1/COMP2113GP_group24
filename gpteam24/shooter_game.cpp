@@ -207,7 +207,11 @@ bool startShooterGame() {
         char inKey = shooter_console::getInput();
         if (inKey == 'W' || inKey == 'A' || inKey == 'S' || inKey == 'D') {
             linuxLastDir = inKey;
+<<<<<<< Updated upstream
             linuxDirKeepAlive = 10;
+=======
+            linuxDirKeepAlive = 15;
+>>>>>>> Stashed changes
         } else if (inKey != 0) {
             linuxLastDir = 0;
         }

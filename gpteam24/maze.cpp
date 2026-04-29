@@ -636,6 +636,7 @@ void displayHealth(const MazeState& state, int MAZE_HEIGHT) {
     cout.flush();
 }
 
+<<<<<<< Updated upstream
 // What it does: Restores maze console rendering state after leaving sub-screens or mini-games.
 // Inputs: None.
 // Outputs: None.
@@ -646,6 +647,8 @@ void restoreMazeConsole() {
     console::clearInputBuffer();
 }
 
+=======
+>>>>>>> Stashed changes
 // What it does: Waits for one raw key input and returns uppercase printable key.
 // Inputs: None.
 // Outputs: Returns pressed key as uppercase char.
