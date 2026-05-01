@@ -230,7 +230,8 @@ If you have Wall Breakers, the maze UI will suggest you can press `B`.
 
 ---
 
-### C) Music / Rhythm Mini-game (Entrance `&`)
+### C) Music / Rhythm Mini-game (Entrance `&`)   
+**Notice: You have to play on Windows or MacOS instead of Linux if you want to hear music due to the sound card issue.**
 - Trigger: When you are near a music-note entrance (`&`), a hint appears. Press:
   - `E` to enter the music game
   - `S``D``F``J``K``L` to strike the corresponding notes
